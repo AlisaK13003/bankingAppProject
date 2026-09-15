@@ -2,8 +2,18 @@
 
 from fastapi import APIRouter, HTTPException, status
 
-from backend.app.schemas.account_schemas import AccountResponse, UserAccountsResponse
-from backend.app.services.account_service import AccountService
+from backend.app.schemas.account_schemas import (
+    AccountResponse,
+    DepositRequest,
+    MoneyMovementResponse,
+    UserAccountsResponse,
+    WithdrawRequest,
+)
+from backend.app.services.account_service import (
+    AccountService,
+    InsufficientFundsError,
+    InvalidAmountError,
+)
 
 
 router = APIRouter(tags=["Accounts"])
@@ -36,3 +46,57 @@ def get_user_accounts(user_id: int) -> dict:
         )
 
     return user_accounts
+
+
+@router.post("/api/accounts/{account_id}/deposit", response_model=MoneyMovementResponse)
+def deposit(account_id: int, payload: DepositRequest) -> dict:
+    # add money to the account and record the transaction
+    try:
+        result = account_service.deposit(
+            account_id=account_id,
+            amount=payload.amount,
+            description=payload.description,
+        )
+    except InvalidAmountError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error),
+        ) from error
+
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Account not found.",
+        )
+
+    return result
+
+
+@router.post("/api/accounts/{account_id}/withdraw", response_model=MoneyMovementResponse)
+def withdraw(account_id: int, payload: WithdrawRequest) -> dict:
+    # remove money from the account and record the transaction
+    try:
+        result = account_service.withdraw(
+            account_id=account_id,
+            amount=payload.amount,
+            category=payload.category.value,
+            description=payload.description,
+        )
+    except InvalidAmountError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error),
+        ) from error
+    except InsufficientFundsError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error),
+        ) from error
+
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Account not found.",
+        )
+
+    return result

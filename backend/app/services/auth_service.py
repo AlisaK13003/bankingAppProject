@@ -1,5 +1,7 @@
 """business logic for temporary auth."""
 
+from datetime import date
+
 from backend.app.data.sample_data import users
 
 
@@ -32,8 +34,11 @@ class AuthService:
         user_id = max(user["user_id"] for user in users) + 1 if users else 1
         user = {
             "user_id": user_id,
+            "name": username,
+            "email": f"{username}@example.com",
             "username": username,
             "password": password,
+            "created_at": date.today().isoformat(),
         }
         users.append(user)
         return user

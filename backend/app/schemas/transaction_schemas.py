@@ -3,13 +3,26 @@
 from pydantic import BaseModel
 
 
-class TransactionResponse(BaseModel):
+class BaseTransactionResponse(BaseModel):
     txn_id: int
+    display_id: str
     account_id: int
     txn_type: str
+    description: str
     amount: float
-    category: str
     created_at: str
+    date: str
+
+
+class DepositTransactionResponse(BaseTransactionResponse):
+    pass
+
+
+class WithdrawalTransactionResponse(BaseTransactionResponse):
+    category: str
+
+
+TransactionResponse = DepositTransactionResponse | WithdrawalTransactionResponse
 
 
 class TransactionHistoryResponse(BaseModel):

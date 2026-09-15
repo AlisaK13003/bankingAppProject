@@ -80,7 +80,9 @@ class BankingInsightsService:
                 total_withdrawals += transaction["amount"]
                 withdrawal_count += 1
 
-        net_change = total_deposits - total_withdrawals
+        total_deposits = round(total_deposits, 2)
+        total_withdrawals = round(total_withdrawals, 2)
+        net_change = round(total_deposits - total_withdrawals, 2)
             
         return {
             "period_days": days,
@@ -138,7 +140,7 @@ class BankingInsightsService:
 
                 spending_by_category.append({
                     "category": category,
-                    "amount": amount,
+                    "amount": round(amount, 2),
                     "percentage": round(percentage, 2),
                 })
 
@@ -170,6 +172,10 @@ class BankingInsightsService:
                     cash_flow_by_month[month_key]["deposits"] += transaction["amount"]
                 elif transaction["txn_type"] == "WITHDRAWAL":
                     cash_flow_by_month[month_key]["withdrawals"] += transaction["amount"]
+
+        for month in cash_flow_by_month.values():
+            month["deposits"] = round(month["deposits"], 2)
+            month["withdrawals"] = round(month["withdrawals"], 2)
 
         return list(cash_flow_by_month.values())
 
@@ -230,7 +236,9 @@ class BankingInsightsService:
             key=current_category_totals.get
         )
 
-        top_spending_amount = current_category_totals[top_spending_category]
+        current_total_spending = round(current_total_spending, 2)
+        previous_total_spending = round(previous_total_spending, 2)
+        top_spending_amount = round(current_category_totals[top_spending_category], 2)
 
         # avoid dividing by zero if there is no previous month spending
         if previous_total_spending == 0:
@@ -244,7 +252,7 @@ class BankingInsightsService:
         average_weekly_spend = current_total_spending / 4
 
         return {
-            "current_total_spending" : current_total_spending,
+            "current_total_spending": current_total_spending,
             "previous_total_spending": previous_total_spending,
             "spending_change_percent": (
                 None

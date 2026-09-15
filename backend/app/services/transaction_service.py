@@ -20,7 +20,7 @@ class TransactionService:
 
         for transaction in transactions:
             if transaction["account_id"] == account_id:
-                account_transactions.append(transaction)
+                account_transactions.append(self.format_transaction(transaction))
 
         account_transactions.sort(
             key=lambda transaction: transaction["created_at"],
@@ -32,3 +32,24 @@ class TransactionService:
             "transaction_count": len(account_transactions),
             "transactions": account_transactions,
         }
+
+    # format a transaction for the history table
+    def format_transaction(self, transaction: dict) -> dict:
+        txn_type = transaction["txn_type"]
+        amount = transaction["amount"]
+
+        formatted_transaction = {
+            "txn_id": transaction["txn_id"],
+            "display_id": f"TXN-{transaction['txn_id']}",
+            "account_id": transaction["account_id"],
+            "txn_type": txn_type,
+            "description": transaction.get("description", ""),
+            "amount": amount,
+            "created_at": transaction["created_at"],
+            "date": transaction["created_at"],
+        }
+
+        if txn_type == "WITHDRAWAL":
+            formatted_transaction["category"] = transaction["category"]
+
+        return formatted_transaction
