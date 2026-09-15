@@ -58,6 +58,7 @@ class AccountService:
             "account_id": account["account_id"],
             "user_id": account["user_id"],
             "user_name": user["name"],
+            "user_email": user["email"],
             "account_type": account["account_type"],
             "balance": account["balance"],
             "created_at": account["created_at"],
