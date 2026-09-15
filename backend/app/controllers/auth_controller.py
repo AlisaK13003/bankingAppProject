@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, status
 
-from backend.app.schemas.auth_schemas import AuthResponse, CreateAccountRequest, SignInRequest
+from backend.app.schemas.auth_schemas import AuthResponse, SignupRequest, SignInRequest
 from backend.app.services.auth_service import AuthService
 
 
@@ -10,8 +10,8 @@ router = APIRouter(tags=["Auth"])
 auth_service = AuthService()
 
 
-@router.post("/accounts", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
-def create_account(payload: CreateAccountRequest) -> dict:
+@router.post("/signup", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
+def signup(payload: SignupRequest) -> dict:
     # create a temporary login account
     username = payload.username.strip()
 

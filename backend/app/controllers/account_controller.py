@@ -3,6 +3,7 @@
 from fastapi import APIRouter, HTTPException, status
 
 from backend.app.schemas.account_schemas import (
+    AccountCreateRequest,
     AccountResponse,
     DepositRequest,
     MoneyMovementResponse,
@@ -19,6 +20,25 @@ from backend.app.services.account_service import (
 router = APIRouter(tags=["Accounts"])
 account_service = AccountService()
 
+@router.post(
+    "/api/accounts",
+    response_model=AccountResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_bank_account(payload: AccountCreateRequest) -> dict:
+    # create a bank account for an existing user
+    account = account_service.create_account(
+        user_id=payload.user_id,
+        account_type=payload.account_type.value,
+    )
+
+    if not account:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+
+    return account
 
 @router.get("/api/accounts/{account_id}", response_model=AccountResponse)
 def get_account(account_id: int) -> dict:

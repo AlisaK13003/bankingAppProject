@@ -71,8 +71,9 @@ Open Swagger, select an endpoint, choose **Try it out**, enter a request body if
 | Method | Endpoint                                  | Purpose                          |
 | ------ | ----------------------------------------- | -------------------------------- |
 | GET    | `/health`                                 | Check whether the API is running |
-| POST   | `/accounts`                               | Create an account                |
+| POST   | `/signup`                                 | Create an account                |
 | POST   | `/signin`                                 | Sign in                          |
+| POST   | `/api/accounts`                           | Make bank account                |
 | GET    | `/api/accounts/{account_id}`              | Get account details              |
 | GET    | `/api/users/{user_id}/accounts`           | Get all accounts for a user      |
 | POST   | `/api/accounts/{account_id}/deposit`      | Deposit money                    |
