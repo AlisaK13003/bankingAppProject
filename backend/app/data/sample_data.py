@@ -1,3 +1,11 @@
+users = [
+    {
+        "user_id": 1,
+        "username": "demo",
+        "password": "Password!1",
+    },
+]
+
 accounts = [
     {
         "account_id": 1,
