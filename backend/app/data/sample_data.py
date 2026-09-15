@@ -1,8 +1,19 @@
 users = [
     {
         "user_id": 1,
+        "name": "Demo User",
+        "email": "demo@example.com",
         "username": "demo",
         "password": "Password!1",
+        "created_at": "2026-09-01",
+    },
+    {
+        "user_id": 2,
+        "name": "Alex Rivera",
+        "email": "alex@example.com",
+        "username": "alex",
+        "password": "Password!1",
+        "created_at": "2026-09-05",
     },
 ]
 
@@ -12,12 +23,21 @@ accounts = [
         "user_id": 1,
         "balance": 1250.00,
         "account_type": "SAVINGS",
+        "created_at": "2026-09-01",
     },
     {
         "account_id": 2,
         "user_id": 1,
         "balance": 425.00,
         "account_type": "CHECKING",
+        "created_at": "2026-09-03",
+    },
+    {
+        "account_id": 3,
+        "user_id": 2,
+        "balance": 980.00,
+        "account_type": "CHECKING",
+        "created_at": "2026-09-05",
     },
 ]
 
