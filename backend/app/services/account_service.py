@@ -43,6 +43,29 @@ class AccountService:
 
         return self.format_account(account, user)
 
+    # create a new zero-balance account for an existing user
+    def create_account(self, user_id: int, account_type: str) -> dict | None:
+        user = self.get_user_by_id(user_id)
+
+        if not user:
+            return None
+
+        next_account_id = max(
+            account["account_id"] for account in accounts
+        ) + 1
+
+        account = {
+            "account_id": next_account_id,
+            "user_id": user_id,
+            "balance": 0.0,
+            "account_type": account_type,
+            "created_at": date.today().isoformat(),
+        }
+
+        accounts.append(account)
+
+        return self.format_account(account, user)
+
     # get every account that belongs to one user
     def get_accounts_for_user(self, user_id: int) -> dict | None:
         user = self.get_user_by_id(user_id)
@@ -54,7 +77,7 @@ class AccountService:
 
         for account in accounts:
             if account["user_id"] == user_id:
-                user_accounts.append(self.format_account(account, user))
+                user_accounts.append(self.format_account_summary(account))
 
         return {
             "user": self.format_user(user),
@@ -69,6 +92,15 @@ class AccountService:
             "balance": account["balance"],
             "created_at": account["created_at"],
             "user": self.format_user(user),
+        }
+
+    # format an account without repeating the user details
+    def format_account_summary(self, account: dict) -> dict:
+        return {
+            "account_id": account["account_id"],
+            "account_type": account["account_type"],
+            "balance": account["balance"],
+            "created_at": account["created_at"],
         }
 
     # keep the nested user response shape in one place

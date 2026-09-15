@@ -3,7 +3,7 @@
 from pydantic import BaseModel, Field
 
 
-class CreateAccountRequest(BaseModel):
+class SignupRequest(BaseModel):
     username: str = Field(min_length=1)
     password: str
 
