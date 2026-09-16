@@ -2,7 +2,7 @@
 transactions lives here -- services never touch the collection directly.
 """
 
-from backend.app.database import db, get_next_id
+from backend.app.database import db
 
 collection = db["transactions"]
 
@@ -14,6 +14,12 @@ class TransactionRepository:
             collection.find({"account_id": account_id}, {"_id": 0}).sort("created_at", -1)
         )
 
+    # highest existing txn_id + 1 -- same race-condition tradeoff noted in
+    # AccountRepository.next_account_id()
+    def next_txn_id(self) -> int:
+        highest = collection.find_one(sort=[("txn_id", -1)])
+        return (highest["txn_id"] + 1) if highest else 1
+
     def create(
         self,
         account_id: int,
@@ -24,7 +30,7 @@ class TransactionRepository:
         category: str | None = None,
     ) -> dict:
         transaction = {
-            "txn_id": get_next_id("txn_id"),
+            "txn_id": self.next_txn_id(),
             "account_id": account_id,
             "txn_type": txn_type,
             "amount": round(amount, 2),
