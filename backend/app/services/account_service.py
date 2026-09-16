@@ -4,6 +4,9 @@ from datetime import date
 
 from backend.app.data.sample_data import accounts, transactions, users
 
+from repositories.transaction_repository import  TransactionRepository
+from repositories.user_repository import UserRepository
+from repositories.account_repository import AccountRepository
 
 class InvalidAmountError(ValueError):
     pass
@@ -14,20 +17,18 @@ class InsufficientFundsError(ValueError):
 
 
 class AccountService:
+    def __init__(self, user_repo: UserRepository, account_repo: AccountRepository, txn_repo: TransactionRepository):
+        self.user_repo = user_repo
+        self.account_repo = account_repo
+        self.txn_repo = txn_repo
 
     # find a user by their id in the temporary sample data
     def get_user_by_id(self, user_id: int) -> dict | None:
-        for user in users:
-            if user["user_id"] == user_id:
-                return user
-        return None
+        return self.user_repo.find_by_id(user_id)
 
     # find one account by account id
     def get_account_by_id(self, account_id: int) -> dict | None:
-        for account in accounts:
-            if account["account_id"] == account_id:
-                return account
-        return None
+        return self.account_repo.find_by_id(account_id)
 
     # format one account with its user details
     def get_account_details(self, account_id: int) -> dict | None:
@@ -50,20 +51,7 @@ class AccountService:
         if not user:
             return None
 
-        next_account_id = max(
-            account["account_id"] for account in accounts
-        ) + 1
-
-        account = {
-            "account_id": next_account_id,
-            "user_id": user_id,
-            "balance": 0.0,
-            "account_type": account_type,
-            "created_at": date.today().isoformat(),
-        }
-
-        accounts.append(account)
-
+        account = self.account_repo.create_account(user_id, account_type)
         return self.format_account(account, user)
 
     # get every account that belongs to one user
@@ -73,15 +61,12 @@ class AccountService:
         if not user:
             return None
 
-        user_accounts = []
-
-        for account in accounts:
-            if account["user_id"] == user_id:
-                user_accounts.append(self.format_account_summary(account))
+        user_accounts = self.account_repo.find_by_user_id(user_id)
+        formatted_accounts = [self.format_account_summary(acc) for acc in user_accounts]
 
         return {
             "user": self.format_user(user),
-            "accounts": user_accounts,
+            "accounts": formatted_accounts,
         }
 
     # keep the api response shape in one place
