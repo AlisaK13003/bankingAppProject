@@ -1,12 +1,12 @@
 """business logic for account details and balance changes."""
 
-from datetime import date
+from datetime import datetime
 
 from backend.app.data.sample_data import accounts, transactions, users
 
-from repositories.transaction_repository import  TransactionRepository
-from repositories.user_repository import UserRepository
-from repositories.account_repository import AccountRepository
+from backend.app.repositories.transaction_repository import  TransactionRepository
+from backend.app.repositories.user_repository import UserRepository
+from backend.app.repositories.account_repository import AccountRepository
 
 class InvalidAmountError(ValueError):
     pass
@@ -17,27 +17,27 @@ class InsufficientFundsError(ValueError):
 
 
 class AccountService:
-    def __init__(self, user_repo: UserRepository, account_repo: AccountRepository, txn_repo: TransactionRepository):
-        self.user_repo = user_repo
-        self.account_repo = account_repo
-        self.txn_repo = txn_repo
+    def __init__(self):
+        self.user_repo = UserRepository()
+        self.account_repo = AccountRepository()
+        self.txn_repo = TransactionRepository()
 
-    # find a user by their id in the temporary sample data
-    def get_user_by_id(self, user_id: int) -> dict | None:
+    # find a user by their id in the database
+    def find_by_user_id(self, user_id: int) -> dict | None:
         return self.user_repo.find_by_id(user_id)
 
     # find one account by account id
-    def get_account_by_id(self, account_id: int) -> dict | None:
+    def find_by_id(self, account_id: int) -> dict | None:
         return self.account_repo.find_by_id(account_id)
 
     # format one account with its user details
     def get_account_details(self, account_id: int) -> dict | None:
-        account = self.get_account_by_id(account_id)
+        account = self.find_by_id(account_id)
 
         if not account:
             return None
 
-        user = self.get_user_by_id(account["user_id"])
+        user = self.find_by_user_id(account["user_id"])
 
         if not user:
             return None
@@ -46,17 +46,24 @@ class AccountService:
 
     # create a new zero-balance account for an existing user
     def create_account(self, user_id: int, account_type: str) -> dict | None:
-        user = self.get_user_by_id(user_id)
+        user = self.find_by_user_id(user_id)
 
         if not user:
             return None
 
-        account = self.account_repo.create_account(user_id, account_type)
-        return self.format_account(account, user)
+        account_data = {
+            "account_id": self.account_repo.next_account_id("account_id"),
+            "user_id": user_id,
+            "balance": 0.0,
+            "account_type": account_type,
+            "created_at": datetime.utcnow().isoformat(),
+        }
+
+        return self.format_account(account_data, user)
 
     # get every account that belongs to one user
     def get_accounts_for_user(self, user_id: int) -> dict | None:
-        user = self.get_user_by_id(user_id)
+        user = self.find_by_user_id(user_id)
 
         if not user:
             return None
@@ -105,7 +112,7 @@ class AccountService:
         category: str = "-",
         description: str = "",
     ) -> dict | None:
-        account = self.get_account_by_id(account_id)
+        account = self.find_by_id(account_id)
 
         if not account:
             return None
@@ -134,7 +141,7 @@ class AccountService:
         category: str = "General",
         description: str = "",
     ) -> dict | None:
-        account = self.get_account_by_id(account_id)
+        account = self.find_by_id(account_id)
 
         if not account:
             return None
@@ -163,7 +170,7 @@ class AccountService:
         if amount <= 0:
             raise InvalidAmountError("Amount must be positive.")
 
-    # append one transaction to the temporary sample data
+    # append one transaction to the database
     def add_transaction(
         self,
         account_id: int,
