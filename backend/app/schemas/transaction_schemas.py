@@ -29,3 +29,13 @@ class TransactionHistoryResponse(BaseModel):
     account_id: int
     transaction_count: int
     transactions: list[TransactionResponse]
+
+
+class TransactionSummaryResponse(BaseModel):
+    account_id: int
+    transaction_count: int
+    deposit_count: int
+    withdrawal_count: int
+    deposits: float
+    withdrawals: float
+    net_change: float
