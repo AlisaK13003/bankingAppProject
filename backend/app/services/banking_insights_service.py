@@ -230,15 +230,19 @@ class BankingInsightsService:
 
                 previous_total_spending += transaction["amount"]
 
-        # find the highest current month spending category
-        top_spending_category = max(
-            current_category_totals,
-            key=current_category_totals.get
-        )
-
         current_total_spending = round(current_total_spending, 2)
         previous_total_spending = round(previous_total_spending, 2)
-        top_spending_amount = round(current_category_totals[top_spending_category], 2)
+
+        # only show a top category when there is spending to compare
+        if current_total_spending == 0:
+            top_spending_category = None
+            top_spending_amount = 0
+        else:
+            top_spending_category = max(
+                current_category_totals,
+                key=current_category_totals.get
+            )
+            top_spending_amount = round(current_category_totals[top_spending_category], 2)
 
         # avoid dividing by zero if there is no previous month spending
         if previous_total_spending == 0:
