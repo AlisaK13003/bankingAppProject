@@ -2,9 +2,13 @@
 
 from pydantic import BaseModel, Field
 
+from backend.app.schemas.dashboard_schemas import DashboardResponse
+
 
 class SignupRequest(BaseModel):
     username: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    email: str
     password: str
 
 
@@ -15,4 +19,4 @@ class SignInRequest(BaseModel):
 
 class AuthResponse(BaseModel):
     message: str
-    dashboard: str
+    dashboard: DashboardResponse
