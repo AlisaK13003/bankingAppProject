@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Local environment
+.env
+.env.local
+
+# Databases and generated files
+*.db
+*.log
+
+# Node/frontend
+node_modules/
+dist/
+build/
+
+# Editor
+.vscode/
+.idea/
