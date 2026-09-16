@@ -1,19 +1,18 @@
 """business logic for the dashboard shown after signup or sign-in."""
 
-from backend.app.services.account_service import AccountService
+from backend.app.repositories.account_repository import AccountRepository
 
 
 class DashboardService:
 
     def __init__(self) -> None:
-        self.account_service = AccountService()
+        self.accounts = AccountRepository()
 
     # build the nav bar: this user's accounts, each linking to their
     # transaction history and insights, plus account details and logout
     def build_dashboard(self, user: dict) -> dict:
         user_id = user["user_id"]
-        user_accounts = self.account_service.get_accounts_for_user(user_id)
-        accounts = user_accounts["accounts"] if user_accounts else []
+        accounts = self.accounts.find_by_user_id(user_id)
 
         return {
             "account_details_path": f"/api/users/{user_id}/accounts",

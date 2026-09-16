@@ -1,8 +1,8 @@
-"""business logic for temporary auth."""
+"""business logic for authentication, backed by MongoDB."""
 
 from datetime import date
 
-from backend.app.data.sample_data import users
+from backend.app.repositories.user_repository import UserRepository
 from backend.app.services.dashboard_service import DashboardService
 
 
@@ -12,21 +12,16 @@ SPECIAL_CHARACTERS = "!@#$%^&*()-_=+[]{};:'\",.<>/?\\|`~"
 class AuthService:
 
     def __init__(self) -> None:
+        self.users = UserRepository()
         self.dashboard_service = DashboardService()
 
-    # find a user by username in the temporary sample data
+    # find a user by username
     def find_user(self, username: str) -> dict | None:
-        for user in users:
-            if user["username"] == username:
-                return user
-        return None
+        return self.users.find_by_username(username)
 
-    # find a user by email in the temporary sample data
+    # find a user by email
     def find_user_by_email(self, email: str) -> dict | None:
-        for user in users:
-            if user["email"] == email:
-                return user
-        return None
+        return self.users.find_by_email(email)
 
     # check the password rules from the original auth work
     def validate_password(self, password: str) -> str | None:
@@ -49,21 +44,19 @@ class AuthService:
             return "Enter a valid email address."
         return None
 
-    # create a temporary in-memory login user
+    # create a login user in MongoDB
     def create_user(self, username: str, name: str, email: str, password: str) -> dict:
-        user_id = max(user["user_id"] for user in users) + 1 if users else 1
-        user = {
-            "user_id": user_id,
+        user_data = {
+            "user_id": self.users.next_user_id(),
             "name": name,
             "email": email,
             "username": username,
             "password": password,
             "created_at": date.today().isoformat(),
         }
-        users.append(user)
-        return user
+        return self.users.create_user(user_data)
 
-    # check if the username and password match a temporary user
+    # check if the username and password match a user
     def authenticate_user(self, username: str, password: str) -> dict | None:
         user = self.find_user(username)
         if not user or user["password"] != password:
