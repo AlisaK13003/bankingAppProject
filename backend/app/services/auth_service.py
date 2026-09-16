@@ -3,6 +3,7 @@
 from datetime import date
 
 from backend.app.data.sample_data import users
+from backend.app.services.dashboard_service import DashboardService
 
 
 SPECIAL_CHARACTERS = "!@#$%^&*()-_=+[]{};:'\",.<>/?\\|`~"
@@ -10,10 +11,20 @@ SPECIAL_CHARACTERS = "!@#$%^&*()-_=+[]{};:'\",.<>/?\\|`~"
 
 class AuthService:
 
+    def __init__(self) -> None:
+        self.dashboard_service = DashboardService()
+
     # find a user by username in the temporary sample data
     def find_user(self, username: str) -> dict | None:
         for user in users:
             if user["username"] == username:
+                return user
+        return None
+
+    # find a user by email in the temporary sample data
+    def find_user_by_email(self, email: str) -> dict | None:
+        for user in users:
+            if user["email"] == email:
                 return user
         return None
 
@@ -29,13 +40,22 @@ class AuthService:
             return "Password must contain at least one special symbol."
         return None
 
+    # check that the email at least looks like an email
+    def validate_email(self, email: str) -> str | None:
+        if " " in email or email.count("@") != 1:
+            return "Enter a valid email address."
+        local, _, domain = email.partition("@")
+        if not local or "." not in domain:
+            return "Enter a valid email address."
+        return None
+
     # create a temporary in-memory login user
-    def create_user(self, username: str, password: str) -> dict:
+    def create_user(self, username: str, name: str, email: str, password: str) -> dict:
         user_id = max(user["user_id"] for user in users) + 1 if users else 1
         user = {
             "user_id": user_id,
-            "name": username,
-            "email": f"{username}@example.com",
+            "name": name,
+            "email": email,
             "username": username,
             "password": password,
             "created_at": date.today().isoformat(),
@@ -53,6 +73,6 @@ class AuthService:
     # create the dashboard response returned after auth succeeds
     def get_dashboard(self, user: dict) -> dict:
         return {
-            "message": f"Welcome, {user['username']}!",
-            "dashboard": "not developed yet",
+            "message": f"Welcome, {user['name']}!",
+            "dashboard": self.dashboard_service.build_dashboard(user),
         }

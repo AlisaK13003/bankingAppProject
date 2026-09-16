@@ -14,6 +14,8 @@ auth_service = AuthService()
 def signup(payload: SignupRequest) -> dict:
     # create a temporary login account
     username = payload.username.strip()
+    name = payload.name.strip()
+    email = payload.email.strip()
 
     if auth_service.find_user(username):
         raise HTTPException(
@@ -21,11 +23,21 @@ def signup(payload: SignupRequest) -> dict:
             detail="That username is already taken.",
         )
 
+    error = auth_service.validate_email(email)
+    if error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+
+    if auth_service.find_user_by_email(email):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account with that email already exists.",
+        )
+
     error = auth_service.validate_password(payload.password)
     if error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
 
-    user = auth_service.create_user(username, payload.password)
+    user = auth_service.create_user(username, name, email, payload.password)
     return auth_service.get_dashboard(user)
 
 
