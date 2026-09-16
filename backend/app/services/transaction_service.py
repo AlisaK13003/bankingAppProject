@@ -2,14 +2,15 @@
 
 from datetime import date
 
-from backend.app.data.sample_data import transactions
+from backend.app.repositories.transaction_repository import TransactionRepository
 from backend.app.services.account_service import AccountService
 
 
 class TransactionService:
 
-    def __init__(self) -> None:
+    def __init__(self, transaction_repository: TransactionRepository | None = None) -> None:
         self.account_service = AccountService()
+        self.transaction_repository = transaction_repository or TransactionRepository()
 
     # get transactions for an existing account, with optional table filters
     def get_transactions_for_account(
@@ -28,17 +29,14 @@ class TransactionService:
 
         account_transactions = []
 
-        for transaction in transactions:
-            if (
-                transaction["account_id"] == account_id
-                and self.matches_filters(
-                    transaction=transaction,
-                    txn_type=txn_type,
-                    category=category,
-                    search=search,
-                    date_from=date_from,
-                    date_to=date_to,
-                )
+        for transaction in self.transaction_repository.find_by_account_id(account_id):
+            if self.matches_filters(
+                transaction=transaction,
+                txn_type=txn_type,
+                category=category,
+                search=search,
+                date_from=date_from,
+                date_to=date_to,
             ):
                 account_transactions.append(self.format_transaction(transaction))
 
@@ -72,14 +70,11 @@ class TransactionService:
 
         account_transactions = []
 
-        for transaction in transactions:
-            if (
-                transaction["account_id"] == account_id
-                and self.matches_filters(
-                    transaction=transaction,
-                    date_from=date_from,
-                    date_to=date_to,
-                )
+        for transaction in self.transaction_repository.find_by_account_id(account_id):
+            if self.matches_filters(
+                transaction=transaction,
+                date_from=date_from,
+                date_to=date_to,
             ):
                 account_transactions.append(transaction)
 

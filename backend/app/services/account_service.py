@@ -2,7 +2,8 @@
 
 from datetime import date
 
-from backend.app.data.sample_data import accounts, transactions, users
+from backend.app.data.sample_data import accounts, users
+from backend.app.repositories.transaction_repository import TransactionRepository
 
 
 class InvalidAmountError(ValueError):
@@ -14,6 +15,9 @@ class InsufficientFundsError(ValueError):
 
 
 class AccountService:
+
+    def __init__(self, transaction_repository: TransactionRepository | None = None) -> None:
+        self.transaction_repository = transaction_repository or TransactionRepository()
 
     # find a user by their id in the temporary sample data
     def get_user_by_id(self, user_id: int) -> dict | None:
@@ -178,7 +182,9 @@ class AccountService:
         if amount <= 0:
             raise InvalidAmountError("Amount must be positive.")
 
-    # append one transaction to the temporary sample data
+    # write one transaction to the transactions collection.
+    # the balance still moves in the sample data above - that switches to
+    # AccountRepository.update_balance when the account details track lands.
     def add_transaction(
         self,
         account_id: int,
@@ -187,10 +193,8 @@ class AccountService:
         category: str,
         description: str = "",
     ) -> dict:
-        next_txn_id = max(transaction["txn_id"] for transaction in transactions) + 1
-
         transaction = {
-            "txn_id": next_txn_id,
+            "txn_id": self.transaction_repository.next_transaction_id(),
             "account_id": account_id,
             "txn_type": txn_type,
             "amount": round(amount, 2),
@@ -201,5 +205,4 @@ class AccountService:
         if txn_type == "WITHDRAWAL":
             transaction["category"] = category
 
-        transactions.append(transaction)
-        return transaction
+        return self.transaction_repository.create_transaction(transaction)
