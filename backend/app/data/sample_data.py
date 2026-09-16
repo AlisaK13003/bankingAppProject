@@ -1,18 +1,3 @@
-"""Demo data for the banking app.
-
-The users/accounts/transactions lists below are kept as-is for now since
-account_service.py, transaction_service.py, and banking_insights_service.py
-still import them directly as their in-memory store (not yet migrated to
-MongoDB). auth_service.py and dashboard_service.py no longer read these
-lists -- they go through UserRepository/AccountRepository instead.
-
-seed() loads this same demo data into MongoDB, for the parts of the app
-that have been migrated. Run it once (or any time you want to reset back
-to demo data) from the repo root:
-
-    python -m backend.app.data.sample_data
-"""
-
 users = [
     {
         "user_id": 1,
@@ -472,33 +457,3 @@ transactions = [
         "created_at": "2026-05-01",
     },
 ]
-
-
-def seed() -> None:
-    from backend.app.database import db
-
-    db["users"].delete_many({})
-    db["accounts"].delete_many({})
-    db["transactions"].delete_many({})
-    db["counters"].delete_many({})
-
-    db["users"].insert_many([dict(user) for user in users])
-    db["accounts"].insert_many([dict(account) for account in accounts])
-    db["transactions"].insert_many([dict(transaction) for transaction in transactions])
-
-    # so new signups/accounts/transactions continue this sequence instead
-    # of colliding with the demo ids
-    db["counters"].insert_many([
-        {"_id": "user_id", "value": max(user["user_id"] for user in users)},
-        {"_id": "account_id", "value": max(account["account_id"] for account in accounts)},
-        {"_id": "txn_id", "value": max(transaction["txn_id"] for transaction in transactions)},
-    ])
-
-    print(
-        f"Seeded {len(users)} users, {len(accounts)} accounts, "
-        f"{len(transactions)} transactions into MongoDB."
-    )
-
-
-if __name__ == "__main__":
-    seed()
