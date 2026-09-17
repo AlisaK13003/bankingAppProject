@@ -64,4 +64,25 @@ export function withdrawFromAccount(accountId, payload) {
   return apiPost(`/api/accounts/${accountId}/withdraw`, payload);
 }
 
+export function signup(payload) {
+  return apiPost("/signup", payload);
+}
+
+export function signIn(payload) {
+  return apiPost("/signin", payload);
+}
+
+export function createAccount(payload) {
+  return apiPost("/api/accounts", payload);
+}
+
+// The auth responses don't return a plain user_id field yet -- only a
+// dashboard.account_details_path like "/api/users/7/accounts". Pull the id
+// out of that path until the backend exposes it directly.
+export function extractUserId(authResponse) {
+  const path = authResponse?.dashboard?.account_details_path ?? "";
+  const match = path.match(/\/api\/users\/(\d+)\/accounts/);
+  return match ? Number(match[1]) : null;
+}
+
 export { API_BASE_URL };
