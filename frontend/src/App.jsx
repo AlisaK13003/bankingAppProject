@@ -3,6 +3,7 @@ import { AppHeader } from "./components";
 import { clearToken, getUserIdFromToken } from "./api/auth";
 import { useAppRoute } from "./hooks/useAppRoute";
 import { useBankingData } from "./hooks/useBankingData";
+import { AccountsPage } from "./pages/AccountsPage";
 import { CreateProfilePage } from "./pages/CreateProfilePage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { HomePage } from "./pages/HomePage";
@@ -96,6 +97,8 @@ export function App() {
             onOpenFirstAccount={() => handleRouteChange(ROUTES.createProfile)}
           />
         );
+      case ROUTES.accounts:
+        return <AccountsPage {...bankingData} />;
       case ROUTES.insights:
         return <InsightsPage {...bankingData} />;
       case ROUTES.dashboard:

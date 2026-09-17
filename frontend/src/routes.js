@@ -4,6 +4,7 @@ export const ROUTES = {
   openAccount: "openAccount",
   signIn: "signIn",
   dashboard: "dashboard",
+  accounts: "accounts",
   transactions: "transactions",
   insights: "insights",
 };
