@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { extractUserId, signIn } from "../api/bankingApi";
-import { Button, StatusPanel, TextField } from "../playground/components";
+import { Button, StatusPanel, TextField } from "../components";
 
 export function SignInPage({ onSignedIn, onCreateAccount, onBackHome }) {
   const [username, setUsername] = useState("");

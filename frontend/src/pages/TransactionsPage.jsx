@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { getTransactionCategories, getTransactions } from "../api/bankingApi";
 import { AccountSelector } from "../components/AccountSelector";
-import { StatusPanel } from "../playground/components";
+import { StatusPanel } from "../components";
 import {
   formatAccountType,
   formatCurrency,
