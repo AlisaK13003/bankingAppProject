@@ -1248,3 +1248,163 @@ h1 {
     display: flex;
   }
 }
+
+/* ==========================================================================
+   Transaction history page
+   Built to the Figma mockups. The header, shell, page heading and account
+   selector are the shared ones; only the pieces below are new.
+   ========================================================================== */
+
+.transactions-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 32px;
+}
+
+.open-first-account {
+  min-height: 44px;
+  min-width: 0;
+  border-radius: var(--radius-control);
+  font-size: 15px;
+  padding: 10px 22px;
+}
+
+.notice-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  padding: 22px 24px;
+}
+
+.notice-card strong {
+  color: var(--text-primary);
+  font-size: 15px;
+}
+
+.notice-card span {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.summary-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.summary-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  padding: 18px 22px;
+}
+
+.summary-tile-label {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.summary-tile-value {
+  font-family: "Raleway", "Segoe UI", Arial, sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--surface-accent-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.filter-bar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(150px, 0.45fr));
+  gap: 14px;
+}
+
+.filter-bar .search-field {
+  min-height: 44px;
+  align-self: stretch;
+}
+
+.filter-bar .search-field input {
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.filter-select {
+  min-height: 44px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.txn-table-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  overflow-x: auto;
+}
+
+.txn-table {
+  display: grid;
+  min-width: 940px;
+  grid-template-columns: 140px 130px 1fr 170px 120px 140px;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  font-size: 14px;
+}
+
+.txn-table-head {
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-page);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.txn-table-head span:nth-child(5),
+.txn-table-row .txn-amount {
+  text-align: right;
+}
+
+.txn-table-row {
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.txn-table-row:last-child {
+  border-bottom: 0;
+}
+
+.txn-id {
+  color: var(--text-secondary);
+}
+
+.txn-amount {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.txn-table-empty {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  padding: 26px 24px;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .filter-bar {
+    grid-template-columns: 1fr;
+  }
+}
