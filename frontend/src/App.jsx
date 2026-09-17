@@ -22,11 +22,23 @@ import {
   TrendsCard,
 } from "./playground/components";
 import { formatAccountType, formatCurrency } from "./playground/formatters";
+import { CreateProfilePage } from "./pages/CreateProfilePage";
+import { HomePage } from "./pages/HomePage";
+import { OpenAccountPage } from "./pages/OpenAccountPage";
+import { SignInPage } from "./pages/SignInPage";
 
 const ROUTES = {
+  home: "home",
+  createProfile: "createProfile",
+  openAccount: "openAccount",
+  signIn: "signIn",
   dashboard: "dashboard",
   insights: "insights",
 };
+
+const PUBLIC_ROUTES = new Set([ROUTES.home, ROUTES.createProfile, ROUTES.openAccount, ROUTES.signIn]);
+
+const EMPTY_SIGNUP_DRAFT = { username: "", name: "", email: "", password: "" };
 
 const WITHDRAWAL_CATEGORIES = [
   "Food & Dining",
@@ -39,16 +51,19 @@ const WITHDRAWAL_CATEGORIES = [
 
 function getInitialRoute() {
   const hashRoute = window.location.hash.replace(/^#\/?/, "");
-  return Object.values(ROUTES).includes(hashRoute) ? hashRoute : ROUTES.dashboard;
+  return Object.values(ROUTES).includes(hashRoute) ? hashRoute : ROUTES.home;
 }
 
 function getInitialUserId() {
-  return new URLSearchParams(window.location.search).get("userId") || "1";
+  return new URLSearchParams(window.location.search).get("userId") || "";
 }
 
 export function App() {
   const [route, setRoute] = useState(getInitialRoute);
-  const bankingData = useBankingData(getInitialUserId());
+  const [userId, setUserId] = useState(getInitialUserId);
+  const [signupDraft, setSignupDraft] = useState(EMPTY_SIGNUP_DRAFT);
+  const [pendingUserId, setPendingUserId] = useState(null);
+  const bankingData = useBankingData(userId);
 
   useEffect(() => {
     function handleHashChange() {
@@ -68,15 +83,98 @@ export function App() {
     setRoute(nextRoute);
   }
 
+  function handleProfileCreated(newUserId) {
+    setPendingUserId(newUserId);
+    handleRouteChange(ROUTES.openAccount);
+  }
+
+  function handleAccountOpened(newUserId) {
+    setUserId(String(newUserId));
+    setSignupDraft(EMPTY_SIGNUP_DRAFT);
+    setPendingUserId(null);
+    handleRouteChange(ROUTES.dashboard);
+  }
+
+  function handleSignedIn(newUserId) {
+    setUserId(String(newUserId));
+    handleRouteChange(ROUTES.dashboard);
+  }
+
   return (
     <div className="app-shell">
-      <AppHeader activeRoute={route} onRouteChange={handleRouteChange} />
-      {route === ROUTES.insights ? (
-        <InsightsPage {...bankingData} />
+      {PUBLIC_ROUTES.has(route) ? (
+        <PublicHeader activeRoute={route} onRouteChange={handleRouteChange} />
       ) : (
-        <DashboardPage {...bankingData} />
+        <AppHeader activeRoute={route} onRouteChange={handleRouteChange} />
       )}
+      {renderRoute()}
     </div>
+  );
+
+  function renderRoute() {
+    switch (route) {
+      case ROUTES.createProfile:
+        return (
+          <CreateProfilePage
+            draft={signupDraft}
+            onDraftChange={setSignupDraft}
+            onContinue={handleProfileCreated}
+            onBackHome={() => handleRouteChange(ROUTES.home)}
+          />
+        );
+      case ROUTES.openAccount:
+        return (
+          <OpenAccountPage
+            pendingUserId={pendingUserId}
+            onOpened={handleAccountOpened}
+            onBackToProfile={() => handleRouteChange(ROUTES.createProfile)}
+          />
+        );
+      case ROUTES.signIn:
+        return (
+          <SignInPage
+            onSignedIn={handleSignedIn}
+            onCreateAccount={() => handleRouteChange(ROUTES.createProfile)}
+            onBackHome={() => handleRouteChange(ROUTES.home)}
+          />
+        );
+      case ROUTES.insights:
+        return <InsightsPage {...bankingData} />;
+      case ROUTES.dashboard:
+        return <DashboardPage {...bankingData} />;
+      default:
+        return <HomePage />;
+    }
+  }
+}
+
+function PublicHeader({ activeRoute, onRouteChange }) {
+  const navItems = [
+    { label: "Home", route: ROUTES.home },
+    { label: "Create Profile", route: ROUTES.createProfile },
+    { label: "Sign In", route: ROUTES.signIn },
+  ];
+
+  return (
+    <header className="app-header">
+      <div className="brand-preview">
+        <span className="brand-mark" />
+        <strong>POLARIS BANK</strong>
+      </div>
+      <nav className="app-nav" aria-label="Application navigation">
+        {navItems.map((item) => (
+          <button
+            aria-current={activeRoute === item.route ? "page" : undefined}
+            className={`app-nav-item ${activeRoute === item.route ? "app-nav-item-active" : ""}`}
+            key={item.label}
+            onClick={() => onRouteChange(item.route)}
+            type="button"
+          >
+            {item.label}
+          </button>
+        ))}
+      </nav>
+    </header>
   );
 }
 
@@ -95,6 +193,13 @@ function useBankingData(userId) {
     let active = true;
 
     async function loadAccounts() {
+      if (!userId) {
+        setAccountsPayload(null);
+        setSelectedAccountId("");
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError("");
 

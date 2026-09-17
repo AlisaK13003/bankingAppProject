@@ -1187,6 +1187,66 @@ h1 {
   color: var(--text-primary);
 }
 
+.auth-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-top: 72px;
+  text-align: center;
+}
+
+.auth-step {
+  color: var(--surface-accent-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.auth-title {
+  font-size: 32px;
+}
+
+.auth-subtitle {
+  margin: 0 0 12px;
+  max-width: 480px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.auth-card {
+  display: flex;
+  width: min(440px, 100%);
+  flex-direction: column;
+  gap: 20px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  padding: 32px;
+  text-align: left;
+}
+
+.auth-card .field {
+  gap: 8px;
+}
+
+.auth-card .button {
+  width: 100%;
+}
+
+.field-hint {
+  margin: -12px 0 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.auth-page .status-panel {
+  width: min(440px, 100%);
+  margin-top: 0;
+}
+
 @media (max-width: 960px) {
   .app-header,
   .playground-header,
