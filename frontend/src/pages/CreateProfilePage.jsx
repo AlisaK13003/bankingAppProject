@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { extractUserId, signup } from "../api/bankingApi";
-import { Button, StatusPanel, TextField } from "../playground/components";
+import { Button, StatusPanel, TextField } from "../components";
 
 export function CreateProfilePage({ draft, onDraftChange, onContinue, onBackHome }) {
   const [submitting, setSubmitting] = useState(false);

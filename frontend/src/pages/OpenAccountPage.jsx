@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createAccount } from "../api/bankingApi";
-import { Button, EmptyState, SelectField, StatusPanel } from "../playground/components";
+import { Button, EmptyState, SelectField, StatusPanel } from "../components";
 
 export function OpenAccountPage({ pendingUserId, onOpened, onBackToProfile }) {
   const [accountType, setAccountType] = useState("CHECKING");

@@ -1,4 +1,6 @@
-import { AccountCard, EmptyState, SelectField } from "../playground/components";
+import { AccountCard } from "./AccountCard";
+import { EmptyState } from "./EmptyState";
+import { SelectField } from "./SelectField";
 import { formatAccountType } from "../playground/formatters";
 
 // Shared by the dashboard, insights and transactions pages: up to two
