@@ -1,6 +1,7 @@
 """main fastapi app for the banking project."""
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.controllers.account_controller import router as account_router
 from backend.app.controllers.auth_controller import router as auth_router
@@ -10,6 +11,17 @@ from backend.app.controllers.transaction_controller import router as transaction
 
 
 app = FastAPI(title="Banking App API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # add feature controllers to the main api app
 app.include_router(account_router)

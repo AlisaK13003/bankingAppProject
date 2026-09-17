@@ -1,20 +1,28 @@
 # import libraries
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
-from backend.app.data.sample_data import transactions
+from backend.app.repositories.transaction_repository import TransactionRepository
 
 class BankingInsightsService:
 
-    # get all the account transactions made under a specific account_id
+    def __init__(self) -> None:
+        self.transactions = TransactionRepository()
+
+    # get all transactions made under a specific account_id
     def get_account_transactions(self, account_id: int) -> list[dict]:
+        return self.transactions.find_by_account_id(account_id)
 
-        account_transactions = []
+    # Mongo may return a date/datetime, while seeded sample data uses an ISO string
+    def get_transaction_date(self, transaction: dict) -> date:
+        created_at = transaction["created_at"]
 
-        for transaction in transactions:
-            if account_id == transaction["account_id"]:
-                account_transactions.append(transaction)
+        if isinstance(created_at, datetime):
+            return created_at.date()
 
-        return account_transactions
+        if isinstance(created_at, date):
+            return created_at
+
+        return date.fromisoformat(created_at)
 
     # helper function to get date in yyyy-mm format
     def get_month_key(self, year: int, month: int) -> str:
@@ -60,7 +68,7 @@ class BankingInsightsService:
 
         for transaction in account_transactions:
 
-            transaction_date = date.fromisoformat(transaction["created_at"])
+            transaction_date = self.get_transaction_date(transaction)
 
             if start_date <= transaction_date <= today:
                 recent_transactions.append(transaction)
@@ -116,14 +124,14 @@ class BankingInsightsService:
         # add withdrawal amounts into their matching categories
         for transaction in account_transactions:
 
-            transaction_date = date.fromisoformat(transaction["created_at"])
+            transaction_date = self.get_transaction_date(transaction)
 
             if start_date <= transaction_date <= today and transaction["txn_type"] == "WITHDRAWAL":
 
-                category = transaction["category"]
+                category = transaction.get("category", "Other")
                 amount= transaction["amount"]
 
-                category_totals[category] += amount
+                category_totals[category] = category_totals.get(category, 0) + amount
                 total_spending += amount
 
         if total_spending == 0:
@@ -164,7 +172,7 @@ class BankingInsightsService:
 
         for transaction in account_transactions:
 
-            transaction_date = date.fromisoformat(transaction["created_at"])
+            transaction_date = self.get_transaction_date(transaction)
             month_key = self.get_month_key(transaction_date.year, transaction_date.month)
 
             if month_key in cash_flow_by_month:
@@ -213,17 +221,17 @@ class BankingInsightsService:
         # track current month categories and previous month total spending
         for transaction in account_transactions:
 
-            transaction_date = date.fromisoformat(transaction["created_at"])
+            transaction_date = self.get_transaction_date(transaction)
             transaction_month_key = self.get_month_key(transaction_date.year, transaction_date.month)
 
             if transaction["txn_type"] != "WITHDRAWAL":
                 continue
 
             if transaction_month_key == current_month_key:
-                category = transaction["category"]
+                category = transaction.get("category", "Other")
                 amount = transaction["amount"]
 
-                current_category_totals[category] += amount
+                current_category_totals[category] = current_category_totals.get(category, 0) + amount
                 current_total_spending += transaction["amount"]
 
             elif transaction_month_key == previous_month_key:

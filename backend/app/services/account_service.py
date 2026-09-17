@@ -1,12 +1,11 @@
 """business logic for account details and balance changes."""
 
-from datetime import datetime
+from datetime import date
 
-from backend.app.data.sample_data import accounts, transactions, users
-
-from backend.app.repositories.transaction_repository import  TransactionRepository
-from backend.app.repositories.user_repository import UserRepository
 from backend.app.repositories.account_repository import AccountRepository
+from backend.app.repositories.transaction_repository import TransactionRepository
+from backend.app.repositories.user_repository import UserRepository
+
 
 class InvalidAmountError(ValueError):
     pass
@@ -17,14 +16,28 @@ class InsufficientFundsError(ValueError):
 
 
 class AccountService:
-    def __init__(self):
-        self.user_repo = UserRepository()
-        self.account_repo = AccountRepository()
-        self.txn_repo = TransactionRepository()
+
+    def __init__(
+        self,
+        account_repository: AccountRepository | None = None,
+        transaction_repository: TransactionRepository | None = None,
+        user_repository: UserRepository | None = None,
+    ) -> None:
+        self.account_repo = account_repository or AccountRepository()
+        self.transaction_repository = transaction_repository or TransactionRepository()
+        self.user_repo = user_repository or UserRepository()
+
+    # compatibility alias for existing transaction/dashboard code
+    def get_user_by_id(self, user_id: int) -> dict | None:
+        return self.find_by_user_id(user_id)
 
     # find a user by their id in the database
     def find_by_user_id(self, user_id: int) -> dict | None:
         return self.user_repo.find_by_id(user_id)
+
+    # compatibility alias for existing transaction/dashboard code
+    def get_account_by_id(self, account_id: int) -> dict | None:
+        return self.find_by_id(account_id)
 
     # find one account by account id
     def find_by_id(self, account_id: int) -> dict | None:
@@ -56,13 +69,10 @@ class AccountService:
             "user_id": user_id,
             "balance": 0.0,
             "account_type": account_type,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": date.today().isoformat(),
         }
 
-        # Save to MongoDB via repository
         saved_account = self.account_repo.create_account(account_data)
-
-        # Format and return the created account
         return self.format_account(saved_account, user)
 
     # get every account that belongs to one user
@@ -124,7 +134,10 @@ class AccountService:
         self.validate_positive_amount(amount)
 
         new_balance = round(account["balance"] + amount, 2)
-        self.account_repo.update_balance(account_id, new_balance)
+        updated_account = self.account_repo.update_balance(account_id, new_balance)
+
+        if not updated_account:
+            return None
 
         transaction = self.add_transaction(
             account_id=account_id,
@@ -158,7 +171,10 @@ class AccountService:
             raise InsufficientFundsError("Cannot withdraw more than the account balance.")
 
         new_balance = round(account["balance"] - amount, 2)
-        self.account_repo.update_balance(account_id, new_balance)
+        updated_account = self.account_repo.update_balance(account_id, new_balance)
+
+        if not updated_account:
+            return None
 
         transaction = self.add_transaction(
             account_id=account_id,
@@ -178,7 +194,7 @@ class AccountService:
         if amount <= 0:
             raise InvalidAmountError("Amount must be positive.")
 
-    # append one transaction to the database via repository
+    # write one transaction to the transactions collection
     def add_transaction(
         self,
         account_id: int,
@@ -187,8 +203,8 @@ class AccountService:
         category: str,
         description: str = "",
     ) -> dict:
-        transaction_data = {
-            "txn_id": self.txn_repo.next_txn_id(),
+        transaction = {
+            "txn_id": self.transaction_repository.next_transaction_id(),
             "account_id": account_id,
             "txn_type": txn_type,
             "amount": round(amount, 2),
@@ -197,6 +213,6 @@ class AccountService:
         }
 
         if txn_type == "WITHDRAWAL":
-            transaction_data["category"] = category
+            transaction["category"] = category
 
-        return self.txn_repo.create_transaction(transaction_data)
+        return self.transaction_repository.create_transaction(transaction)

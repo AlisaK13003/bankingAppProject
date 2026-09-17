@@ -1,31 +1,81 @@
-"""MongoDB access for the accounts collection. All SQL/query code for
-accounts lives here -- services never touch the collection directly.
-"""
+"""MongoDB access for the accounts collection."""
+
+from pymongo import ASCENDING, DESCENDING, ReturnDocument
+
+from backend.app.data.sample_data import accounts as sample_accounts
 from backend.app.database import db
 
 
-collection = db["accounts"]
+COLLECTION_NAME = "accounts"
 
 
 class AccountRepository:
 
-    def find_by_id(self, account_id: int) -> dict | None:
-        account = collection.find_one({"account_id": account_id})
-        return self._format_doc(account) if hasattr(self, "_format_doc") else account
+    def __init__(self, collection=None) -> None:
+        self._collection = collection
 
-    def get_accounts_for_user(self, user_id: int) -> list[dict]:
-        cursor = collection.find({"user_id": user_id})
-        return [self._format_doc(doc) for doc in cursor]
+    @property
+    def collection(self):
+        if self._collection is None:
+            self._collection = db[COLLECTION_NAME]
+        return self._collection
+
+    def format_document(self, document: dict) -> dict:
+        account = dict(document)
+        account.pop("_id", None)
+        return account
+
+    def find_by_id(self, account_id: int) -> dict | None:
+        document = self.collection.find_one({"account_id": account_id})
+
+        if document:
+            return self.format_document(document)
+
+        for account in sample_accounts:
+            if account["account_id"] == account_id:
+                return dict(account)
+
+        return None
 
     def find_by_user_id(self, user_id: int) -> list[dict]:
-        return list(collection.find({"user_id": user_id}, {"_id": 0}))
+        cursor = self.collection.find({"user_id": user_id}).sort(
+            [("account_id", ASCENDING)]
+        )
+        results = [self.format_document(document) for document in cursor]
+
+        if results:
+            return results
+
+        return [
+            dict(account)
+            for account in sample_accounts
+            if account["user_id"] == user_id
+        ]
 
     def create_account(self, account_data: dict) -> dict:
-        collection.insert_one(account_data)
-        account_data.pop("_id", None)
-        return account_data
+        account = dict(account_data)
+        self.collection.insert_one(dict(account))
+        return self.format_document(account)
+
+    def update_balance(self, account_id: int, balance: float) -> dict | None:
+        document = self.collection.find_one_and_update(
+            {"account_id": account_id},
+            {"$set": {"balance": balance}},
+            return_document=ReturnDocument.AFTER,
+        )
+
+        if not document:
+            return None
+
+        return self.format_document(document)
 
     def next_account_id(self) -> int:
-        """Finds the maximum account_id and increments it by 1."""
-        highest = collection.find_one(sort=[("account_id", -1)])
-        return (highest["account_id"] + 1) if highest else 1
+        highest = self.collection.find_one(sort=[("account_id", DESCENDING)])
+
+        if highest:
+            return highest["account_id"] + 1
+
+        if not sample_accounts:
+            return 1
+
+        return max(account["account_id"] for account in sample_accounts) + 1
