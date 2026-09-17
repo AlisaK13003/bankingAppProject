@@ -7,10 +7,10 @@ const PUBLIC_NAV_ITEMS = [
 ];
 
 const APP_NAV_ITEMS = [
-    { label: "Dashboard", route: ROUTES.dashboard, enabled: true },
-    { label: "Transactions", route: ROUTES.transactions, enabled: true },
-    { label: "Insights", route: ROUTES.insights, enabled: true },
-    { label: "Accounts", route: "accounts", enabled: false },
+  { label: "Dashboard", route: ROUTES.dashboard, enabled: true },
+  { label: "Accounts", route: ROUTES.accounts, enabled: true },
+  { label: "Transactions", route: ROUTES.transactions, enabled: true },
+  { label: "Insights", route: ROUTES.insights, enabled: true },
 ];
 
 export function AppHeader({ activeRoute, isPublic = false, onRouteChange, onSignOut }) {
