@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getTransactionCategories, getTransactionSummary, getTransactions } from "../api/bankingApi";
+import { getTransactionCategories, getTransactions } from "../api/bankingApi";
 import { AccountSelector } from "../components/AccountSelector";
 import { StatusPanel } from "../playground/components";
 import {
@@ -15,6 +15,8 @@ const SEARCH_DEBOUNCE_MS = 300;
 export function TransactionsPage({
   accounts,
   error,
+  onBackToAccount,
+  onOpenFirstAccount,
   selectedAccount,
   selectedAccountId,
   setSelectedAccountId,
@@ -75,16 +77,14 @@ export function TransactionsPage({
         setLoadingRows(true);
         setRowsError("");
 
-        Promise.all([
-          getTransactions(selectedAccountId, filters),
-          getTransactionSummary(selectedAccountId, filters),
-        ])
-          .then(([historyPayload, summaryPayload]) => {
+        getTransactions(selectedAccountId, filters)
+          .then((historyPayload) => {
             if (!active) {
               return;
             }
-            setTransactions(historyPayload.transactions ?? []);
-            setSummary(summaryPayload);
+            const filteredTransactions = historyPayload.transactions ?? [];
+            setTransactions(filteredTransactions);
+            setSummary(summarizeTransactions(filteredTransactions));
           })
           .catch((requestError) => {
             if (!active) {
@@ -121,9 +121,11 @@ export function TransactionsPage({
           <p>{buildSubtitle(accounts, selectedAccount)}</p>
         </div>
         {hasAccounts ? (
-          <span className="back-link">← Account details</span>
+          <button className="back-link link-button" onClick={onBackToAccount} type="button">
+            ← Account details
+          </button>
         ) : (
-          <button className="button button-primary open-first-account" type="button">
+          <button className="button button-primary open-first-account" onClick={onOpenFirstAccount} type="button">
             Open first account
           </button>
         )}
@@ -265,6 +267,35 @@ function TransactionsTable({ transactions, loading }) {
       )}
     </div>
   );
+}
+
+function summarizeTransactions(transactions) {
+  let deposits = 0;
+  let withdrawals = 0;
+
+  transactions.forEach((transaction) => {
+    if (transaction.txn_type === "DEPOSIT") {
+      deposits += Number(transaction.amount ?? 0);
+    } else if (transaction.txn_type === "WITHDRAWAL") {
+      withdrawals += Number(transaction.amount ?? 0);
+    }
+  });
+
+  deposits = roundCurrency(deposits);
+  withdrawals = roundCurrency(withdrawals);
+
+  return {
+    deposit_count: transactions.filter((transaction) => transaction.txn_type === "DEPOSIT").length,
+    withdrawal_count: transactions.filter((transaction) => transaction.txn_type === "WITHDRAWAL").length,
+    deposits,
+    withdrawals,
+    net_change: roundCurrency(deposits - withdrawals),
+    transaction_count: transactions.length,
+  };
+}
+
+function roundCurrency(value) {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
 // "+$4,890.00" / "-$734.00", and a plain "$0.00" when there is nothing to sign
