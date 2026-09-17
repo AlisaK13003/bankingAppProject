@@ -31,10 +31,225 @@ body {
   min-width: 320px;
 }
 
+#root {
+  min-height: 100vh;
+}
+
 button,
 input,
 select {
   font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: var(--surface-page);
+}
+
+.app-header {
+  display: flex;
+  min-height: 88px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: var(--surface-card);
+  padding: 0 56px;
+}
+
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.app-nav-item,
+.sign-out-button {
+  min-height: 41px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 10px 14px;
+}
+
+.app-nav-item-active {
+  background: var(--surface-secondary);
+  color: var(--surface-accent-secondary);
+}
+
+.app-nav-item:disabled,
+.sign-out-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.sign-out-button {
+  border: 1px solid var(--border-subtle);
+}
+
+.page-shell {
+  width: min(1280px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 48px 0 80px;
+}
+
+.dashboard-page,
+.insights-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.insights-page {
+  gap: 16px;
+  padding-top: 32px;
+}
+
+.page-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.page-title-block h1 {
+  font-size: 32px;
+}
+
+.page-title-block p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.heading-row {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.back-link {
+  color: var(--surface-accent-secondary);
+  font-size: 14px;
+}
+
+.dashboard-overview-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 448px;
+  gap: 32px;
+}
+
+.dashboard-overview-row .balance-overview,
+.dashboard-overview-row .summary-card,
+.last-30-days .summary-card,
+.wide-card {
+  margin-top: 0;
+}
+
+.dashboard-summary-card {
+  min-height: 210px;
+}
+
+.dashboard-summary-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 24px;
+}
+
+.dashboard-summary-heading h2 {
+  font-size: 20px;
+}
+
+.dashboard-summary-heading span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.dashboard-summary-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.summary-stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 12px;
+}
+
+.summary-stat span {
+  color: var(--text-secondary);
+}
+
+.summary-stat strong {
+  color: var(--text-primary);
+}
+
+.amount-accent,
+.summary-accent strong {
+  color: var(--surface-accent-primary);
+}
+
+.app-account-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.account-count-1 {
+  grid-template-columns: 1fr;
+}
+
+.account-selector-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.account-card-heading {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.account-card-heading strong {
+  color: var(--surface-accent-secondary);
+  font-size: 12px;
+}
+
+.card-heading h2 {
+  margin-bottom: 4px;
+}
+
+.card-link {
+  color: var(--surface-accent-primary);
+  font-size: 12px;
+}
+
+.last-30-days {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.last-30-days h2 {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.insights-metric-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.app-insights-grid {
+  margin-top: 0;
 }
 
 .playground-shell {
@@ -445,6 +660,36 @@ h1 {
 
 .modal-actions .button {
   width: 100%;
+}
+
+.modal-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 23, 42, 0.34);
+  padding: 24px;
+}
+
+.active-money-modal {
+  width: min(560px, 100%);
+  box-shadow: 0 24px 70px rgba(24, 59, 102, 0.22);
+}
+
+.active-money-modal .field {
+  margin-bottom: 18px;
+}
+
+.active-money-modal select.field-control {
+  appearance: auto;
+}
+
+.modal-error {
+  margin: -4px 0 12px;
+  color: var(--text-danger);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .status-panel {
@@ -943,13 +1188,38 @@ h1 {
 }
 
 @media (max-width: 960px) {
+  .app-header,
   .playground-header,
   .balance-overview {
     flex-direction: column;
     align-items: stretch;
   }
 
+  .app-header {
+    padding: 20px 24px;
+  }
+
+  .app-nav {
+    flex-wrap: wrap;
+  }
+
+  .page-shell {
+    padding-top: 28px;
+  }
+
+  .heading-row,
+  .dashboard-overview-row {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+
+  .heading-row {
+    flex-direction: column;
+  }
+
   .controls-panel,
+  .app-account-grid,
+  .insights-metric-grid,
   .two-column,
   .insights-grid,
   .trend-stats,
