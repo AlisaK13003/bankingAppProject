@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AppHeader } from "./components";
+import { clearToken, getToken, getUserIdFromToken } from "./api/auth";
 import { useBankingData } from "./hooks/useBankingData";
 import { CreateProfilePage } from "./pages/CreateProfilePage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -18,7 +19,8 @@ function getInitialRoute() {
 }
 
 function getInitialUserId() {
-  return new URLSearchParams(window.location.search).get("userId") || "";
+  const fromUrl = new URLSearchParams(window.location.search).get("userId");
+  return fromUrl || getUserIdFromToken() || "";
 }
 
 export function App() {
@@ -37,6 +39,12 @@ export function App() {
     window.addEventListener("hashchange", handleHashChange);
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
+
+  useEffect(() => {
+    if (!PUBLIC_ROUTES.has(route) && !getToken()) {
+      handleRouteChange(ROUTES.signIn);
+    }
+  }, [route]);
 
   function handleRouteChange(nextRoute) {
     if (!Object.values(ROUTES).includes(nextRoute)) {
@@ -64,9 +72,20 @@ export function App() {
     handleRouteChange(ROUTES.dashboard);
   }
 
+  function handleSignOut() {
+    clearToken();
+    setUserId("");
+    handleRouteChange(ROUTES.home);
+  }
+
   return (
     <div className="app-shell">
-      <AppHeader activeRoute={route} isPublic={isPublicRoute} onRouteChange={handleRouteChange} />
+      <AppHeader
+        activeRoute={route}
+        isPublic={isPublicRoute}
+        onRouteChange={handleRouteChange}
+        onSignOut={handleSignOut}
+      />
       {renderRoute()}
     </div>
   );

@@ -2,10 +2,12 @@
 fake) -- no real Atlas connection is used or touched.
 """
 
+import jwt
 import mongomock
 import pytest
 
 from backend.app.repositories import account_repository, user_repository
+from backend.app.services import auth_service as auth_service_module
 from backend.app.services.auth_service import AuthService, hash_password, verify_password
 
 
@@ -160,6 +162,37 @@ def test_authenticate_user_with_unknown_username_returns_none(service):
     assert service.authenticate_user("nobody", "GoodPass1!") is None
 
 
+# ------------------------------------------------------ create_access_token / decode_access_token
+
+def test_create_access_token_returns_a_nonempty_string(service):
+    user = service.create_user("alice", "Alice A", "alice@example.com", "GoodPass1!")
+    token = service.create_access_token(user)
+    assert isinstance(token, str) and token
+
+
+def test_decode_access_token_round_trips_the_expected_claims(service):
+    user = service.create_user("alice", "Alice A", "alice@example.com", "GoodPass1!")
+    token = service.create_access_token(user)
+    payload = service.decode_access_token(token)
+    assert payload is not None
+    assert payload["sub"] == str(user["user_id"])
+    assert payload["username"] == "alice"
+    assert payload["email"] == "alice@example.com"
+    assert payload["role"] == "user"
+    assert "exp" in payload
+
+
+def test_decode_access_token_rejects_a_garbage_token(service):
+    assert service.decode_access_token("not-a-real-token") is None
+
+
+def test_decode_access_token_rejects_a_token_signed_with_a_different_secret(service):
+    bogus_token = jwt.encode(
+        {"sub": "1"}, "a-completely-different-secret", algorithm=auth_service_module.JWT_ALGORITHM
+    )
+    assert service.decode_access_token(bogus_token) is None
+
+
 # ------------------------------------------------------------------------ get_dashboard
 
 def test_get_dashboard_greets_the_user_by_name(service):
@@ -190,3 +223,12 @@ def test_get_dashboard_lists_the_users_existing_accounts(service):
     assert len(accounts) == 1
     assert accounts[0]["account_id"] == 1
     assert accounts[0]["balance"] == 250.0
+
+
+def test_get_dashboard_includes_a_decodable_bearer_access_token(service):
+    user = service.create_user("alice", "Alice A", "alice@example.com", "GoodPass1!")
+    response = service.get_dashboard(user)
+    assert response["token_type"] == "bearer"
+    payload = service.decode_access_token(response["access_token"])
+    assert payload is not None
+    assert payload["sub"] == str(user["user_id"])
