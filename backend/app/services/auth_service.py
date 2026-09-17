@@ -22,7 +22,7 @@ JWT_SECRET_KEY = os.environ.get(
     "JWT_SECRET_KEY", "dev-only-insecure-secret-please-change-me-before-deploying"
 )
 JWT_ALGORITHM = "HS256"
-JWT_EXPIRES_MINUTES = 60
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
 
 # bcrypt caps input at 72 bytes and raises past that, so encode once and
@@ -97,8 +97,13 @@ class AuthService:
         payload = {
             "sub": str(user["user_id"]),
             "username": user["username"],
+            "email": user["email"],
+            # there's no role system yet -- every user is "user" until one
+            # exists, but reading it off the user record (if present) means
+            # this keeps working once roles are added.
+            "role": user.get("role", "user"),
             "iat": now,
-            "exp": now + timedelta(minutes=JWT_EXPIRES_MINUTES),
+            "exp": now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
         }
         return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
@@ -114,6 +119,7 @@ class AuthService:
     def get_dashboard(self, user: dict) -> dict:
         return {
             "message": f"Welcome, {user['name']}!",
-            "token": self.create_access_token(user),
+            "access_token": self.create_access_token(user),
+            "token_type": "bearer",
             "dashboard": self.dashboard_service.build_dashboard(user),
         }

@@ -19,5 +19,6 @@ class SignInRequest(BaseModel):
 
 class AuthResponse(BaseModel):
     message: str
-    token: str
+    access_token: str
+    token_type: str = "bearer"
     dashboard: DashboardResponse

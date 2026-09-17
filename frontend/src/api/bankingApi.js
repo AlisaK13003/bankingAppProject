@@ -11,6 +11,10 @@ async function apiGet(path) {
     : await response.text();
 
   if (!response.ok) {
+    if (response.status === 401) {
+      clearToken();
+      window.location.hash = "/signIn";
+    }
     const detail = typeof payload === "object" && payload !== null ? payload.detail : payload;
     throw new Error(detail || `Request failed with status ${response.status}`);
   }

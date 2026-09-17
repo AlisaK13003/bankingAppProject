@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AppHeader } from "./components";
-import { clearToken, getToken } from "./api/auth";
+import { clearToken, getToken, getUserIdFromToken } from "./api/auth";
 import { useBankingData } from "./hooks/useBankingData";
 import { CreateProfilePage } from "./pages/CreateProfilePage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -19,7 +19,8 @@ function getInitialRoute() {
 }
 
 function getInitialUserId() {
-  return new URLSearchParams(window.location.search).get("userId") || "";
+  const fromUrl = new URLSearchParams(window.location.search).get("userId");
+  return fromUrl || getUserIdFromToken() || "";
 }
 
 export function App() {
