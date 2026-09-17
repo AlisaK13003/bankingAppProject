@@ -242,7 +242,7 @@ export function AccountCard({ account, selected, onSelect }) {
   );
 }
 
-export function BalanceOverviewCard({ accounts, selectedAccount }) {
+export function BalanceOverviewCard({ accounts, selectedAccount, onDeposit, onWithdraw }) {
   const totalBalance = accounts.reduce((total, account) => total + Number(account.balance ?? 0), 0);
 
   return (
@@ -261,8 +261,8 @@ export function BalanceOverviewCard({ accounts, selectedAccount }) {
             : "No account selected"}
         </strong>
         <div className="quick-actions">
-          <Button variant="light">Deposit</Button>
-          <Button variant="light">Withdraw</Button>
+          <Button disabled={!selectedAccount} onClick={onDeposit} variant="light">Deposit</Button>
+          <Button disabled={!selectedAccount} onClick={onWithdraw} variant="light">Withdraw</Button>
         </div>
       </div>
     </section>

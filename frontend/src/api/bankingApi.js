@@ -15,6 +15,27 @@ async function apiGet(path) {
   return payload;
 }
 
+async function apiPost(path, body) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const contentType = response.headers.get("content-type") ?? "";
+  const payload = contentType.includes("application/json")
+    ? await response.json()
+    : await response.text();
+
+  if (!response.ok) {
+    const detail = typeof payload === "object" && payload !== null ? payload.detail : payload;
+    throw new Error(detail || `Request failed with status ${response.status}`);
+  }
+
+  return payload;
+}
+
 export function getUserAccounts(userId) {
   return apiGet(`/api/users/${userId}/accounts`);
 }
@@ -33,6 +54,14 @@ export function getTransactionSummary(accountId) {
 
 export function getInsights(accountId) {
   return apiGet(`/api/accounts/${accountId}/insights`);
+}
+
+export function depositToAccount(accountId, payload) {
+  return apiPost(`/api/accounts/${accountId}/deposit`, payload);
+}
+
+export function withdrawFromAccount(accountId, payload) {
+  return apiPost(`/api/accounts/${accountId}/withdraw`, payload);
 }
 
 export { API_BASE_URL };
