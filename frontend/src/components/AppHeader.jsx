@@ -13,7 +13,7 @@ const APP_NAV_ITEMS = [
     { label: "Accounts", route: "accounts", enabled: false },
 ];
 
-export function AppHeader({ activeRoute, isPublic = false, onRouteChange }) {
+export function AppHeader({ activeRoute, isPublic = false, onRouteChange, onSignOut }) {
   const navItems = isPublic ? PUBLIC_NAV_ITEMS : APP_NAV_ITEMS;
 
   return (
@@ -36,7 +36,7 @@ export function AppHeader({ activeRoute, isPublic = false, onRouteChange }) {
           </button>
         ))}
         {!isPublic ? (
-          <button className="sign-out-button" disabled type="button">
+          <button className="sign-out-button" onClick={onSignOut} type="button">
             Sign out
           </button>
         ) : null}

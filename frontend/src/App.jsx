@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AppHeader } from "./components";
+import { clearToken, getToken } from "./api/auth";
 import { useBankingData } from "./hooks/useBankingData";
 import { CreateProfilePage } from "./pages/CreateProfilePage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -38,6 +39,12 @@ export function App() {
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
 
+  useEffect(() => {
+    if (!PUBLIC_ROUTES.has(route) && !getToken()) {
+      handleRouteChange(ROUTES.signIn);
+    }
+  }, [route]);
+
   function handleRouteChange(nextRoute) {
     if (!Object.values(ROUTES).includes(nextRoute)) {
       return;
@@ -64,9 +71,20 @@ export function App() {
     handleRouteChange(ROUTES.dashboard);
   }
 
+  function handleSignOut() {
+    clearToken();
+    setUserId("");
+    handleRouteChange(ROUTES.home);
+  }
+
   return (
     <div className="app-shell">
-      <AppHeader activeRoute={route} isPublic={isPublicRoute} onRouteChange={handleRouteChange} />
+      <AppHeader
+        activeRoute={route}
+        isPublic={isPublicRoute}
+        onRouteChange={handleRouteChange}
+        onSignOut={handleSignOut}
+      />
       {renderRoute()}
     </div>
   );
