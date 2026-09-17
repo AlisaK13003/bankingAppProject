@@ -2,7 +2,6 @@
 
 from pymongo import ASCENDING, DESCENDING, ReturnDocument
 
-from backend.app.data.sample_data import accounts as sample_accounts
 from backend.app.database import db
 
 
@@ -28,29 +27,16 @@ class AccountRepository:
     def find_by_id(self, account_id: int) -> dict | None:
         document = self.collection.find_one({"account_id": account_id})
 
-        if document:
-            return self.format_document(document)
+        if not document:
+            return None
 
-        for account in sample_accounts:
-            if account["account_id"] == account_id:
-                return dict(account)
-
-        return None
+        return self.format_document(document)
 
     def find_by_user_id(self, user_id: int) -> list[dict]:
         cursor = self.collection.find({"user_id": user_id}).sort(
             [("account_id", ASCENDING)]
         )
-        results = [self.format_document(document) for document in cursor]
-
-        if results:
-            return results
-
-        return [
-            dict(account)
-            for account in sample_accounts
-            if account["user_id"] == user_id
-        ]
+        return [self.format_document(document) for document in cursor]
 
     def create_account(self, account_data: dict) -> dict:
         account = dict(account_data)
@@ -75,7 +61,4 @@ class AccountRepository:
         if highest:
             return highest["account_id"] + 1
 
-        if not sample_accounts:
-            return 1
-
-        return max(account["account_id"] for account in sample_accounts) + 1
+        return 1
