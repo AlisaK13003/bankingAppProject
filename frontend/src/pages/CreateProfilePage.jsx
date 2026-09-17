@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { setToken } from "../api/auth";
 import { extractUserId, signup } from "../api/bankingApi";
 import { Button, StatusPanel, TextField } from "../components";
 
@@ -28,6 +29,7 @@ export function CreateProfilePage({ draft, onDraftChange, onContinue, onBackHome
         email: draft.email.trim(),
         password: draft.password,
       });
+      setToken(response.access_token);
       onContinue(extractUserId(response));
     } catch (requestError) {
       setError(requestError.message);

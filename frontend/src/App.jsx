@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AppHeader } from "./components";
-import { clearToken } from "./api/auth";
+import { clearToken, getUserIdFromToken } from "./api/auth";
 import { useAppRoute } from "./hooks/useAppRoute";
 import { useBankingData } from "./hooks/useBankingData";
 import { CreateProfilePage } from "./pages/CreateProfilePage";
@@ -15,7 +15,8 @@ import { ROUTES } from "./routes";
 const EMPTY_SIGNUP_DRAFT = { username: "", name: "", email: "", password: "" };
 
 function getInitialUserId() {
-  return new URLSearchParams(window.location.search).get("userId") || "";
+  const fromUrl = new URLSearchParams(window.location.search).get("userId");
+  return fromUrl || getUserIdFromToken() || "";
 }
 
 export function App() {

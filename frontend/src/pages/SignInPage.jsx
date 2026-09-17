@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { setToken } from "../api/auth";
 import { extractUserId, signIn } from "../api/bankingApi";
 import { Button, StatusPanel, TextField } from "../components";
 
@@ -21,6 +22,7 @@ export function SignInPage({ onSignedIn, onCreateAccount, onBackHome }) {
 
     try {
       const response = await signIn({ username: username.trim(), password });
+      setToken(response.access_token);
       onSignedIn(extractUserId(response));
     } catch (requestError) {
       setError(requestError.message);

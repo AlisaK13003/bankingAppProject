@@ -1,12 +1,40 @@
 """business logic for authentication, backed by MongoDB."""
 
-from datetime import date
+import os
+from datetime import date, datetime, timedelta, timezone
+
+import bcrypt
+import jwt
+from dotenv import load_dotenv
 
 from backend.app.repositories.user_repository import UserRepository
 from backend.app.services.dashboard_service import DashboardService
 
 
+load_dotenv()
+
 SPECIAL_CHARACTERS = "!@#$%^&*()-_=+[]{};:'\",.<>/?\\|`~"
+
+# Access tokens are signed HS256 JWTs. JWT_SECRET_KEY should always be set in
+# the environment for anything beyond local dev -- the fallback below is only
+# there so the app still runs if someone forgets to set it locally.
+JWT_SECRET_KEY = os.environ.get(
+    "JWT_SECRET_KEY", "dev-only-insecure-secret-please-change-me-before-deploying"
+)
+JWT_ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+
+
+# bcrypt caps input at 72 bytes and raises past that, so encode once and
+# truncate consistently between hashing and verifying
+def hash_password(password: str) -> str:
+    truncated = password.encode("utf-8")[:72]
+    return bcrypt.hashpw(truncated, bcrypt.gensalt()).decode("utf-8")
+
+
+def verify_password(password: str, hashed_password: str) -> bool:
+    truncated = password.encode("utf-8")[:72]
+    return bcrypt.checkpw(truncated, hashed_password.encode("utf-8"))
 
 
 class AuthService:
@@ -51,7 +79,7 @@ class AuthService:
             "name": name,
             "email": email,
             "username": username,
-            "password": password,
+            "password": hash_password(password),
             "created_at": date.today().isoformat(),
         }
         return self.users.create_user(user_data)
@@ -59,13 +87,39 @@ class AuthService:
     # check if the username and password match a user
     def authenticate_user(self, username: str, password: str) -> dict | None:
         user = self.find_user(username)
-        if not user or user["password"] != password:
+        if not user or not verify_password(password, user["password"]):
             return None
         return user
+
+    # issue a signed, time-limited access token for a signed-in user
+    def create_access_token(self, user: dict) -> str:
+        now = datetime.now(timezone.utc)
+        payload = {
+            "sub": str(user["user_id"]),
+            "username": user["username"],
+            "email": user["email"],
+            # there's no role system yet -- every user is "user" until one
+            # exists, but reading it off the user record (if present) means
+            # this keeps working once roles are added.
+            "role": user.get("role", "user"),
+            "iat": now,
+            "exp": now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        }
+        return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+    # verify a token and return its payload, or None if it's missing, malformed,
+    # expired, or signed with a different key
+    def decode_access_token(self, token: str) -> dict | None:
+        try:
+            return jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        except jwt.PyJWTError:
+            return None
 
     # create the dashboard response returned after auth succeeds
     def get_dashboard(self, user: dict) -> dict:
         return {
             "message": f"Welcome, {user['name']}!",
+            "access_token": self.create_access_token(user),
+            "token_type": "bearer",
             "dashboard": self.dashboard_service.build_dashboard(user),
         }
