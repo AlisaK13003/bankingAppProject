@@ -2,11 +2,25 @@
 
 from datetime import date
 
+import bcrypt
+
 from backend.app.repositories.user_repository import UserRepository
 from backend.app.services.dashboard_service import DashboardService
 
 
 SPECIAL_CHARACTERS = "!@#$%^&*()-_=+[]{};:'\",.<>/?\\|`~"
+
+
+# bcrypt caps input at 72 bytes and raises past that, so encode once and
+# truncate consistently between hashing and verifying
+def hash_password(password: str) -> str:
+    truncated = password.encode("utf-8")[:72]
+    return bcrypt.hashpw(truncated, bcrypt.gensalt()).decode("utf-8")
+
+
+def verify_password(password: str, hashed_password: str) -> bool:
+    truncated = password.encode("utf-8")[:72]
+    return bcrypt.checkpw(truncated, hashed_password.encode("utf-8"))
 
 
 class AuthService:
@@ -51,7 +65,7 @@ class AuthService:
             "name": name,
             "email": email,
             "username": username,
-            "password": password,
+            "password": hash_password(password),
             "created_at": date.today().isoformat(),
         }
         return self.users.create_user(user_data)
@@ -59,7 +73,7 @@ class AuthService:
     # check if the username and password match a user
     def authenticate_user(self, username: str, password: str) -> dict | None:
         user = self.find_user(username)
-        if not user or user["password"] != password:
+        if not user or not verify_password(password, user["password"]):
             return None
         return user
 
