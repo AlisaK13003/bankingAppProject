@@ -41,7 +41,7 @@ class TransactionService:
                 account_transactions.append(self.format_transaction(transaction))
 
         account_transactions.sort(
-            key=lambda transaction: (transaction["created_at"], transaction["txn_id"]),
+            key=lambda transaction: transaction["created_at"],
             reverse=True,
         )
 
