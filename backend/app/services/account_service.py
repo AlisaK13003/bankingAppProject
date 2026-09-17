@@ -2,8 +2,9 @@
 
 from datetime import date
 
-from backend.app.data.sample_data import accounts, users
+from backend.app.repositories.account_repository import AccountRepository
 from backend.app.repositories.transaction_repository import TransactionRepository
+from backend.app.repositories.user_repository import UserRepository
 
 
 class InvalidAmountError(ValueError):
@@ -16,31 +17,40 @@ class InsufficientFundsError(ValueError):
 
 class AccountService:
 
-    def __init__(self, transaction_repository: TransactionRepository | None = None) -> None:
+    def __init__(
+        self,
+        account_repository: AccountRepository | None = None,
+        transaction_repository: TransactionRepository | None = None,
+        user_repository: UserRepository | None = None,
+    ) -> None:
+        self.account_repo = account_repository or AccountRepository()
         self.transaction_repository = transaction_repository or TransactionRepository()
+        self.user_repo = user_repository or UserRepository()
 
-    # find a user by their id in the temporary sample data
+    # compatibility alias for existing transaction/dashboard code
     def get_user_by_id(self, user_id: int) -> dict | None:
-        for user in users:
-            if user["user_id"] == user_id:
-                return user
-        return None
+        return self.find_by_user_id(user_id)
+
+    # find a user by their id in the database
+    def find_by_user_id(self, user_id: int) -> dict | None:
+        return self.user_repo.find_by_id(user_id)
+
+    # compatibility alias for existing transaction/dashboard code
+    def get_account_by_id(self, account_id: int) -> dict | None:
+        return self.find_by_id(account_id)
 
     # find one account by account id
-    def get_account_by_id(self, account_id: int) -> dict | None:
-        for account in accounts:
-            if account["account_id"] == account_id:
-                return account
-        return None
+    def find_by_id(self, account_id: int) -> dict | None:
+        return self.account_repo.find_by_id(account_id)
 
     # format one account with its user details
     def get_account_details(self, account_id: int) -> dict | None:
-        account = self.get_account_by_id(account_id)
+        account = self.find_by_id(account_id)
 
         if not account:
             return None
 
-        user = self.get_user_by_id(account["user_id"])
+        user = self.find_by_user_id(account["user_id"])
 
         if not user:
             return None
@@ -49,43 +59,35 @@ class AccountService:
 
     # create a new zero-balance account for an existing user
     def create_account(self, user_id: int, account_type: str) -> dict | None:
-        user = self.get_user_by_id(user_id)
+        user = self.find_by_user_id(user_id)
 
         if not user:
             return None
 
-        next_account_id = max(
-            account["account_id"] for account in accounts
-        ) + 1
-
-        account = {
-            "account_id": next_account_id,
+        account_data = {
+            "account_id": self.account_repo.next_account_id(),
             "user_id": user_id,
             "balance": 0.0,
             "account_type": account_type,
             "created_at": date.today().isoformat(),
         }
 
-        accounts.append(account)
-
-        return self.format_account(account, user)
+        saved_account = self.account_repo.create_account(account_data)
+        return self.format_account(saved_account, user)
 
     # get every account that belongs to one user
     def get_accounts_for_user(self, user_id: int) -> dict | None:
-        user = self.get_user_by_id(user_id)
+        user = self.find_by_user_id(user_id)
 
         if not user:
             return None
 
-        user_accounts = []
-
-        for account in accounts:
-            if account["user_id"] == user_id:
-                user_accounts.append(self.format_account_summary(account))
+        user_accounts = self.account_repo.find_by_user_id(user_id)
+        formatted_accounts = [self.format_account_summary(acc) for acc in user_accounts]
 
         return {
             "user": self.format_user(user),
-            "accounts": user_accounts,
+            "accounts": formatted_accounts,
         }
 
     # keep the api response shape in one place
@@ -124,14 +126,19 @@ class AccountService:
         category: str = "-",
         description: str = "",
     ) -> dict | None:
-        account = self.get_account_by_id(account_id)
+        account = self.find_by_id(account_id)
 
         if not account:
             return None
 
         self.validate_positive_amount(amount)
 
-        account["balance"] = round(account["balance"] + amount, 2)
+        new_balance = round(account["balance"] + amount, 2)
+        updated_account = self.account_repo.update_balance(account_id, new_balance)
+
+        if not updated_account:
+            return None
+
         transaction = self.add_transaction(
             account_id=account_id,
             txn_type="DEPOSIT",
@@ -153,7 +160,7 @@ class AccountService:
         category: str = "General",
         description: str = "",
     ) -> dict | None:
-        account = self.get_account_by_id(account_id)
+        account = self.find_by_id(account_id)
 
         if not account:
             return None
@@ -163,7 +170,12 @@ class AccountService:
         if amount > account["balance"]:
             raise InsufficientFundsError("Cannot withdraw more than the account balance.")
 
-        account["balance"] = round(account["balance"] - amount, 2)
+        new_balance = round(account["balance"] - amount, 2)
+        updated_account = self.account_repo.update_balance(account_id, new_balance)
+
+        if not updated_account:
+            return None
+
         transaction = self.add_transaction(
             account_id=account_id,
             txn_type="WITHDRAWAL",
@@ -182,9 +194,7 @@ class AccountService:
         if amount <= 0:
             raise InvalidAmountError("Amount must be positive.")
 
-    # write one transaction to the transactions collection.
-    # the balance still moves in the sample data above - that switches to
-    # AccountRepository.update_balance when the account details track lands.
+    # write one transaction to the transactions collection
     def add_transaction(
         self,
         account_id: int,
