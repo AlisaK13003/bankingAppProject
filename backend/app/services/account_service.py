@@ -52,14 +52,18 @@ class AccountService:
             return None
 
         account_data = {
-            "account_id": self.account_repo.next_account_id("account_id"),
+            "account_id": self.account_repo.next_account_id(),
             "user_id": user_id,
             "balance": 0.0,
             "account_type": account_type,
             "created_at": datetime.utcnow().isoformat(),
         }
 
-        return self.format_account(account_data, user)
+        # Save to MongoDB via repository
+        saved_account = self.account_repo.create_account(account_data)
+
+        # Format and return the created account
+        return self.format_account(saved_account, user)
 
     # get every account that belongs to one user
     def get_accounts_for_user(self, user_id: int) -> dict | None:
@@ -119,7 +123,9 @@ class AccountService:
 
         self.validate_positive_amount(amount)
 
-        account["balance"] = round(account["balance"] + amount, 2)
+        new_balance = round(account["balance"] + amount, 2)
+        self.account_repo.update_balance(account_id, new_balance)
+
         transaction = self.add_transaction(
             account_id=account_id,
             txn_type="DEPOSIT",
@@ -151,7 +157,9 @@ class AccountService:
         if amount > account["balance"]:
             raise InsufficientFundsError("Cannot withdraw more than the account balance.")
 
-        account["balance"] = round(account["balance"] - amount, 2)
+        new_balance = round(account["balance"] - amount, 2)
+        self.account_repo.update_balance(account_id, new_balance)
+
         transaction = self.add_transaction(
             account_id=account_id,
             txn_type="WITHDRAWAL",
@@ -170,7 +178,7 @@ class AccountService:
         if amount <= 0:
             raise InvalidAmountError("Amount must be positive.")
 
-    # append one transaction to the database
+    # append one transaction to the database via repository
     def add_transaction(
         self,
         account_id: int,
@@ -179,10 +187,8 @@ class AccountService:
         category: str,
         description: str = "",
     ) -> dict:
-        next_txn_id = max(transaction["txn_id"] for transaction in transactions) + 1
-
-        transaction = {
-            "txn_id": next_txn_id,
+        transaction_data = {
+            "txn_id": self.txn_repo.next_txn_id(),
             "account_id": account_id,
             "txn_type": txn_type,
             "amount": round(amount, 2),
@@ -191,7 +197,6 @@ class AccountService:
         }
 
         if txn_type == "WITHDRAWAL":
-            transaction["category"] = category
+            transaction_data["category"] = category
 
-        transactions.append(transaction)
-        return transaction
+        return self.txn_repo.create_transaction(transaction_data)

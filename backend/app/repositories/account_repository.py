@@ -1,7 +1,7 @@
 """MongoDB access for the accounts collection. All SQL/query code for
 accounts lives here -- services never touch the collection directly.
 """
-from backend.app.database import db, get_next_id
+from backend.app.database import db
 
 
 collection = db["accounts"]
