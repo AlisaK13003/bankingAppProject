@@ -19,4 +19,5 @@ class SignInRequest(BaseModel):
 
 class AuthResponse(BaseModel):
     message: str
+    token: str
     dashboard: DashboardResponse

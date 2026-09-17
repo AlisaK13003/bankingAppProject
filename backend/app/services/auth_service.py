@@ -1,14 +1,28 @@
 """business logic for authentication, backed by MongoDB."""
 
-from datetime import date
+import os
+from datetime import date, datetime, timedelta, timezone
 
 import bcrypt
+import jwt
+from dotenv import load_dotenv
 
 from backend.app.repositories.user_repository import UserRepository
 from backend.app.services.dashboard_service import DashboardService
 
 
+load_dotenv()
+
 SPECIAL_CHARACTERS = "!@#$%^&*()-_=+[]{};:'\",.<>/?\\|`~"
+
+# Access tokens are signed HS256 JWTs. JWT_SECRET_KEY should always be set in
+# the environment for anything beyond local dev -- the fallback below is only
+# there so the app still runs if someone forgets to set it locally.
+JWT_SECRET_KEY = os.environ.get(
+    "JWT_SECRET_KEY", "dev-only-insecure-secret-please-change-me-before-deploying"
+)
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRES_MINUTES = 60
 
 
 # bcrypt caps input at 72 bytes and raises past that, so encode once and
@@ -77,9 +91,29 @@ class AuthService:
             return None
         return user
 
+    # issue a signed, time-limited access token for a signed-in user
+    def create_access_token(self, user: dict) -> str:
+        now = datetime.now(timezone.utc)
+        payload = {
+            "sub": str(user["user_id"]),
+            "username": user["username"],
+            "iat": now,
+            "exp": now + timedelta(minutes=JWT_EXPIRES_MINUTES),
+        }
+        return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+
+    # verify a token and return its payload, or None if it's missing, malformed,
+    # expired, or signed with a different key
+    def decode_access_token(self, token: str) -> dict | None:
+        try:
+            return jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        except jwt.PyJWTError:
+            return None
+
     # create the dashboard response returned after auth succeeds
     def get_dashboard(self, user: dict) -> dict:
         return {
             "message": f"Welcome, {user['name']}!",
+            "token": self.create_access_token(user),
             "dashboard": self.dashboard_service.build_dashboard(user),
         }

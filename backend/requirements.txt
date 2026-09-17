@@ -6,3 +6,4 @@ mongomock>=4.1
 bcrypt>=4.1
 pymongo[srv]>=4.7
 python-dotenv>=1.0
+pyjwt>=2.8
