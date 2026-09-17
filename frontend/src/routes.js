@@ -14,3 +14,7 @@ export const PUBLIC_ROUTES = new Set([
   ROUTES.openAccount,
   ROUTES.signIn,
 ]);
+
+export function isKnownRoute(route) {
+  return Object.values(ROUTES).includes(route);
+}
