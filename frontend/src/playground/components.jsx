@@ -228,7 +228,10 @@ export function AccountCard({ account, selected, onSelect }) {
       onClick={() => onSelect?.(account.account_id)}
     >
       <span className="account-meta">
-        <span className="account-type">{formatAccountType(account.account_type)}</span>
+        <span className="account-card-heading">
+          <span className="account-type">{formatAccountType(account.account_type)}</span>
+          {selected ? <strong>Selected</strong> : null}
+        </span>
         <span className="muted">Account ID {account.account_id}</span>
       </span>
       <span className="account-balance">
@@ -276,14 +279,21 @@ export function SummaryCard({ title, value, detail, tone = "default" }) {
   );
 }
 
-export function RecentTransactionsCard({ transactions }) {
-  const recentTransactions = transactions.slice(0, 5);
+export function RecentTransactionsCard({ selectedAccount, transactions }) {
+  const recentTransactions = transactions.slice(0, 4);
 
   return (
     <section className="card wide-card">
       <div className="card-heading">
-        <h2>Recent transactions</h2>
-        <span>{transactions.length} total</span>
+        <div>
+          <h2>Recent transactions</h2>
+          <span>
+            {selectedAccount
+              ? `${formatAccountType(selectedAccount.account_type)} · Account ID ${selectedAccount.account_id}`
+              : `${transactions.length} total`}
+          </span>
+        </div>
+        {transactions.length ? <strong className="card-link">View all</strong> : null}
       </div>
       {recentTransactions.length ? (
         <div className="transaction-list">
