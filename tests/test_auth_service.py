@@ -17,7 +17,11 @@ def service(monkeypatch):
     client = mongomock.MongoClient()
     db = client["banking_app_test"]
     monkeypatch.setattr(user_repository, "collection", db["users"])
-    monkeypatch.setattr(account_repository, "collection", db["accounts"])
+    monkeypatch.setattr(
+        account_repository.AccountRepository,
+        "collection",
+        property(lambda self: db["accounts"]),
+    )
     return AuthService()
 
 
@@ -147,7 +151,7 @@ def test_get_dashboard_has_no_accounts_for_a_brand_new_user(service):
 def test_get_dashboard_lists_the_users_existing_accounts(service):
     user = service.create_user("alice", "Alice A", "alice@example.com", "GoodPass1!")
 
-    account_repository.collection.insert_one({
+    service.dashboard_service.accounts.collection.insert_one({
         "account_id": 1,
         "user_id": user["user_id"],
         "balance": 250.0,

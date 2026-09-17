@@ -36,6 +36,21 @@ async function apiPost(path, body) {
   return payload;
 }
 
+// turn the transaction-history filters into a query string, skipping
+// anything the user has not set
+function buildQuery(filters = {}) {
+  const params = new URLSearchParams();
+
+  ["type", "category", "search", "from", "to"].forEach((key) => {
+    if (filters[key]) {
+      params.set(key, filters[key]);
+    }
+  });
+
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
+
 export function getUserAccounts(userId) {
   return apiGet(`/api/users/${userId}/accounts`);
 }
@@ -44,12 +59,18 @@ export function getAccount(accountId) {
   return apiGet(`/api/accounts/${accountId}`);
 }
 
-export function getTransactions(accountId) {
-  return apiGet(`/api/accounts/${accountId}/transactions`);
+// filters are optional, so existing callers can keep passing only an id
+export function getTransactions(accountId, filters) {
+  return apiGet(`/api/accounts/${accountId}/transactions${buildQuery(filters)}`);
 }
 
-export function getTransactionSummary(accountId) {
-  return apiGet(`/api/accounts/${accountId}/transactions/summary`);
+export function getTransactionSummary(accountId, filters) {
+  const range = filters ? { from: filters.from, to: filters.to } : undefined;
+  return apiGet(`/api/accounts/${accountId}/transactions/summary${buildQuery(range)}`);
+}
+
+export function getTransactionCategories(accountId) {
+  return apiGet(`/api/accounts/${accountId}/transactions/categories`);
 }
 
 export function getInsights(accountId) {

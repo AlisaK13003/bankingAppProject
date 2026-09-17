@@ -8,8 +8,9 @@ import {
   getUserAccounts,
   withdrawFromAccount,
 } from "./api/bankingApi";
+import { AccountSelector } from "./components/AccountSelector";
+import { TransactionsPage } from "./pages/TransactionsPage";
 import {
-  AccountCard,
   BalanceOverviewCard,
   EmptyState,
   RecentTransactionsCard,
@@ -33,6 +34,7 @@ const ROUTES = {
   openAccount: "openAccount",
   signIn: "signIn",
   dashboard: "dashboard",
+  transactions: "transactions",
   insights: "insights",
 };
 
@@ -136,6 +138,14 @@ export function App() {
             onSignedIn={handleSignedIn}
             onCreateAccount={() => handleRouteChange(ROUTES.createProfile)}
             onBackHome={() => handleRouteChange(ROUTES.home)}
+          />
+        );
+      case ROUTES.transactions:
+        return (
+          <TransactionsPage
+            {...bankingData}
+            onBackToAccount={() => handleRouteChange(ROUTES.dashboard)}
+            onOpenFirstAccount={() => handleRouteChange(ROUTES.createProfile)}
           />
         );
       case ROUTES.insights:
@@ -320,7 +330,7 @@ function useBankingData(userId) {
 function AppHeader({ activeRoute, onRouteChange }) {
   const navItems = [
     { label: "Dashboard", route: ROUTES.dashboard, enabled: true },
-    { label: "Transactions", route: "transactions", enabled: false },
+    { label: "Transactions", route: ROUTES.transactions, enabled: true },
     { label: "Insights", route: ROUTES.insights, enabled: true },
     { label: "Accounts", route: "accounts", enabled: false },
   ];
@@ -529,42 +539,6 @@ function SummaryStat({ label, value, tone = "" }) {
       <span>{label}</span>
       <strong className={tone ? `amount-${tone}` : ""}>{value}</strong>
     </div>
-  );
-}
-
-function AccountSelector({ accounts, selectedAccountId, setSelectedAccountId }) {
-  const selectedAccount = accounts.find((item) => String(item.account_id) === String(selectedAccountId));
-
-  if (!accounts.length) {
-    return <EmptyState title="No accounts yet" message="Create an account to see balances, activity, and insights." />;
-  }
-
-  if (accounts.length > 2) {
-    return (
-      <section className="account-selector-stack">
-        <SelectField label="Account" value={selectedAccountId} onChange={setSelectedAccountId}>
-          {accounts.map((account) => (
-            <option key={account.account_id} value={account.account_id}>
-              {formatAccountType(account.account_type)} · Account ID {account.account_id}
-            </option>
-          ))}
-        </SelectField>
-        <AccountCard account={selectedAccount} selected />
-      </section>
-    );
-  }
-
-  return (
-    <section className={`account-card-grid app-account-grid account-count-${accounts.length}`}>
-      {accounts.map((account) => (
-        <AccountCard
-          account={account}
-          key={account.account_id}
-          onSelect={(nextAccountId) => setSelectedAccountId(String(nextAccountId))}
-          selected={String(account.account_id) === String(selectedAccountId)}
-        />
-      ))}
-    </section>
   );
 }
 
