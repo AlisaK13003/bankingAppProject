@@ -11,6 +11,16 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT_DIR))
 
 from backend.app.data.sample_data import accounts, transactions, users  # noqa: E402
+from backend.app.services.auth_service import hash_password  # noqa: E402
+
+
+def build_seed_users() -> list[dict]:
+    seeded_users = []
+    for user in users:
+        seeded_user = user.copy()
+        seeded_user["password"] = hash_password(seeded_user["password"])
+        seeded_users.append(seeded_user)
+    return seeded_users
 
 
 def main() -> None:
@@ -47,9 +57,9 @@ def main() -> None:
     transactions_collection.create_index([("txn_id", ASCENDING)], unique=True)
     transactions_collection.create_index([("account_id", ASCENDING)])
 
-    users_collection.insert_many(users)
-    accounts_collection.insert_many(accounts)
-    transactions_collection.insert_many(transactions)
+    users_collection.insert_many(build_seed_users())
+    accounts_collection.insert_many([account.copy() for account in accounts])
+    transactions_collection.insert_many([transaction.copy() for transaction in transactions])
 
     print(f"Seeded database: {database_name}")
     print(f"Users: {users_collection.count_documents({})}")
