@@ -2,8 +2,9 @@
 
 from datetime import date
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from backend.app.ownership import require_account_access
 from backend.app.schemas.account_schemas import WithdrawalCategory
 from backend.app.schemas.transaction_schemas import (
     TransactionHistoryResponse,
@@ -24,6 +25,7 @@ def get_transactions(
     search: str | None = None,
     date_from: date | None = Query(default=None, alias="from"),
     date_to: date | None = Query(default=None, alias="to"),
+    current_user: dict = Depends(require_account_access),
 ) -> dict:
     # get the transaction history for one account
     history = transaction_service.get_transactions_for_account(
@@ -49,6 +51,7 @@ def get_transaction_summary(
     account_id: int,
     date_from: date | None = Query(default=None, alias="from"),
     date_to: date | None = Query(default=None, alias="to"),
+    current_user: dict = Depends(require_account_access),
 ) -> dict:
     # get deposit, withdrawal, and net totals for the selected date range
     summary = transaction_service.get_transaction_summary(
@@ -67,7 +70,10 @@ def get_transaction_summary(
 
 
 @router.get("/{account_id}/transactions/categories", response_model=list[str])
-def get_transaction_categories(account_id: int) -> list[str]:
+def get_transaction_categories(
+    account_id: int,
+    current_user: dict = Depends(require_account_access),
+) -> list[str]:
     # return the category dropdown values for one existing account
     account = transaction_service.account_service.get_account_by_id(account_id)
 
