@@ -1,13 +1,15 @@
 """response shapes for transaction routes."""
 
+from typing import Annotated, Literal
+
 from pydantic import BaseModel
+from pydantic import Field
 
 
 class BaseTransactionResponse(BaseModel):
     txn_id: int
     display_id: str
     account_id: int
-    txn_type: str
     description: str
     amount: float
     created_at: str
@@ -15,14 +17,18 @@ class BaseTransactionResponse(BaseModel):
 
 
 class DepositTransactionResponse(BaseTransactionResponse):
-    pass
+    txn_type: Literal["DEPOSIT"]
 
 
 class WithdrawalTransactionResponse(BaseTransactionResponse):
+    txn_type: Literal["WITHDRAWAL"]
     category: str
 
 
-TransactionResponse = DepositTransactionResponse | WithdrawalTransactionResponse
+TransactionResponse = Annotated[
+    DepositTransactionResponse | WithdrawalTransactionResponse,
+    Field(discriminator="txn_type"),
+]
 
 
 class TransactionHistoryResponse(BaseModel):

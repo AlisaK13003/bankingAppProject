@@ -204,6 +204,44 @@ def test_the_owner_can_deposit_and_withdraw(client):
     assert withdraw.status_code == 200
 
 
+def test_money_movements_appear_in_transaction_history(client):
+    deposit = client.post(
+        f"/api/accounts/{JORDANS_ACCOUNT}/deposit",
+        json={"amount": 100, "description": "Demo deposit"},
+        headers=headers_for(JORDAN),
+    )
+    withdraw = client.post(
+        f"/api/accounts/{JORDANS_ACCOUNT}/withdraw",
+        json={"amount": 25, "category": "Shopping", "description": "Demo withdrawal"},
+        headers=headers_for(JORDAN),
+    )
+    history = client.get(
+        f"/api/accounts/{JORDANS_ACCOUNT}/transactions", headers=headers_for(JORDAN)
+    )
+
+    assert deposit.status_code == 200
+    assert withdraw.status_code == 200
+    assert history.status_code == 200
+
+    transactions = history.json()["transactions"]
+    assert transactions[0]["txn_type"] == "WITHDRAWAL"
+    assert transactions[0]["description"] == "Demo withdrawal"
+    assert transactions[0]["category"] == "Shopping"
+    assert transactions[1]["txn_type"] == "DEPOSIT"
+    assert transactions[1]["description"] == "Demo deposit"
+    assert any(
+        transaction["txn_type"] == "DEPOSIT"
+        and transaction["description"] == "Demo deposit"
+        for transaction in transactions
+    )
+    assert any(
+        transaction["txn_type"] == "WITHDRAWAL"
+        and transaction["description"] == "Demo withdrawal"
+        and transaction["category"] == "Shopping"
+        for transaction in transactions
+    )
+
+
 # ------------------------------- 403: signed in, but not your bank data
 def test_a_user_cannot_read_someone_elses_account(client):
     response = client.get(f"/api/accounts/{ALEXS_ACCOUNT}", headers=headers_for(JORDAN))
