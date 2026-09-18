@@ -123,6 +123,17 @@ select {
   font-size: 14px;
 }
 
+.page-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-title-row .button {
+  flex-shrink: 0;
+}
+
 .heading-row {
   display: flex;
   min-height: 64px;
@@ -752,8 +763,8 @@ h1 {
 }
 
 .account-card-selected {
-  border-color: var(--surface-accent-primary);
-  box-shadow: 0 0 0 3px rgba(24, 59, 102, 0.12);
+  border-color: var(--surface-accent-secondary);
+  box-shadow: 0 0 0 2px rgba(47, 168, 160, 0.16);
 }
 
 .account-meta,
@@ -1256,6 +1267,7 @@ h1 {
 
 @media (max-width: 960px) {
   .app-header,
+  .page-title-row,
   .playground-header,
   .balance-overview {
     flex-direction: column;

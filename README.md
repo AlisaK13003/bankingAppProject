@@ -1,57 +1,94 @@
 # Banking App
 
-A simple banking application built with a FastAPI backend, MongoDB Atlas data storage, and a future frontend.
+A full-stack banking application built with a FastAPI backend, MongoDB data storage, and a React frontend. Users can create a profile, sign in, open bank accounts, view account details, deposit money, withdraw money, review transaction history, and view account insights.
 
-## Backend Architecture
+## Features
+
+* Create a user profile and sign in with JWT authentication.
+* Store the signed-in user's token in the frontend and send it with protected API requests.
+* Open checking or savings accounts.
+* View account details and all accounts for the signed-in user.
+* Deposit and withdraw money with validation.
+* Maintain transaction records for deposits and withdrawals.
+* View transaction history, summaries, categories, and banking insights.
+* Protect banking routes so users can only access their own accounts.
+
+## Tech Stack
+
+* Backend: FastAPI, Python, PyJWT, bcrypt
+* Frontend: React, Vite, HTML, CSS, JavaScript
+* Database: MongoDB / MongoDB Atlas
+* Testing and API tools: pytest, Swagger UI, Postman
+
+## Architecture
 
 ```text
-API request
-    ↓
-Controller
-    ↓
-Service
-    ↓
-Repository
-    ↓
-MongoDB Atlas
+Frontend UI
+    ->
+REST API controllers
+    ->
+Service layer
+    ->
+Repository layer
+    ->
+MongoDB
 ```
 
-* `controllers/` contains the API endpoints.
-* `services/` contains business logic and calculations.
-* `schemas/` defines and validates request and response data.
-* `repositories/` contains database access code.
-* `database.py` creates the shared MongoDB connection.
-* `data/sample_data.py` still provides seed data and temporary fallback data for parts of the app that have not been migrated yet.
-
-The backend is kept modular so each layer has one responsibility. This makes it easier to test the application and migrate one feature area at a time from sample data to MongoDB Atlas.
-
-## Backend Structure
+Project structure:
 
 ```text
 backend/
   app/
-    main.py
-    database.py
-    controllers/
-    services/
-    schemas/
-    repositories/
-    models/
-    data/
-      sample_data.py
+    controllers/   API route handlers
+    services/      Business logic
+    repositories/  MongoDB access
+    schemas/       Request and response models
+    data/          Sample seed data
+    main.py        FastAPI app setup
+    database.py    MongoDB connection
   scripts/
     seed_mongodb.py
-    test_banking_insights_service.py
   tests/
   requirements.txt
+
+frontend/
+  src/
+    api/           Frontend API helpers and token storage
+    components/    Shared UI components
+    hooks/         Route and banking data hooks
+    pages/         App screens
+  package.json
 ```
 
-## Running the Backend
+## Setup
 
-From the repository root:
+Create a local `.env` file in the repository root using `.env.example` as a guide:
+
+```text
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-url>/?retryWrites=true&w=majority&appName=Cluster0
+MONGODB_DB_NAME=banking_app
+JWT_SECRET_KEY=<your-local-secret>
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+```
+
+Install backend dependencies:
 
 ```bash
 pip install -r backend/requirements.txt
+```
+
+Install frontend dependencies:
+
+```bash
+cd frontend
+npm install
+```
+
+## Run Locally
+
+From the repository root, start the backend:
+
+```bash
 uvicorn backend.app.main:app --reload
 ```
 
@@ -61,27 +98,28 @@ The API runs at:
 http://127.0.0.1:8000
 ```
 
-## Environment Setup
+In a second terminal, start the frontend:
 
-Create a local `.env` file in the repository root using `.env.example` as the template:
-
-```text
-MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-url>/?retryWrites=true&w=majority&appName=Cluster0
-MONGODB_DB_NAME=banking_app
+```bash
+cd frontend
+npm run dev
 ```
 
-`MONGODB_URI` points to the MongoDB Atlas cluster.
-`MONGODB_DB_NAME` controls which database the app uses.
+The frontend runs at:
 
-## Seeding MongoDB
+```text
+http://127.0.0.1:5173
+```
 
-To load the current sample banking data into MongoDB Atlas, run:
+## Seed Data
+
+To load sample users, accounts, and transactions into MongoDB, run:
 
 ```bash
 python backend/scripts/seed_mongodb.py
 ```
 
-The seed script loads users, accounts, and transactions from:
+The seed data lives in:
 
 ```text
 backend/app/data/sample_data.py
@@ -94,40 +132,88 @@ FastAPI provides interactive API documentation:
 * Swagger UI: `http://127.0.0.1:8000/docs`
 * ReDoc: `http://127.0.0.1:8000/redoc`
 
-Open Swagger, select an endpoint, choose **Try it out**, enter a request body if needed, and select **Execute**.
+Swagger can be used to inspect request and response shapes. Postman is useful for saving a collection of test requests, especially requests that include Authorization headers.
 
 ## Main Endpoints
 
-| Method | Endpoint                                           | Purpose                          |
-| ------ | -------------------------------------------------- | -------------------------------- |
-| GET    | `/health`                                          | Check whether the API is running |
-| POST   | `/signup`                                          | Create a login user              |
-| POST   | `/signin`                                          | Sign in                          |
-| POST   | `/logout`                                          | Sign out                         |
-| POST   | `/api/accounts`                                    | Make bank account                |
-| GET    | `/api/accounts/{account_id}`                       | Get account details              |
-| GET    | `/api/users/{user_id}/accounts`                    | Get all accounts for a user      |
-| POST   | `/api/accounts/{account_id}/deposit`               | Deposit money                    |
-| POST   | `/api/accounts/{account_id}/withdraw`              | Withdraw money                   |
-| GET    | `/api/accounts/{account_id}/transactions`          | Get transaction history          |
-| GET    | `/api/accounts/{account_id}/transactions/summary`  | Get transaction totals           |
-| GET    | `/api/accounts/{account_id}/transactions/categories` | Get withdrawal categories      |
-| GET    | `/api/accounts/{account_id}/insights`              | Get banking insights             |
+| Method | Endpoint | Purpose |
+| ------ | -------- | ------- |
+| GET | `/health` | Check whether the API is running |
+| POST | `/signup` | Create a user and return an access token |
+| POST | `/signin` | Sign in and return an access token |
+| POST | `/logout` | Validate token and sign out on the client |
+| POST | `/api/accounts` | Create a bank account |
+| GET | `/api/accounts/{account_id}` | Get account details |
+| GET | `/api/users/{user_id}/accounts` | Get all accounts for a user |
+| POST | `/api/accounts/{account_id}/deposit` | Deposit money |
+| POST | `/api/accounts/{account_id}/withdraw` | Withdraw money |
+| GET | `/api/accounts/{account_id}/transactions` | Get transaction history |
+| GET | `/api/accounts/{account_id}/transactions/summary` | Get transaction totals |
+| GET | `/api/accounts/{account_id}/transactions/categories` | Get withdrawal categories |
+| GET | `/api/accounts/{account_id}/insights` | Get banking insights |
 
-## Current Data Setup
+Protected endpoints require this header:
 
-The backend is currently in the middle of the MongoDB migration.
+```text
+Authorization: Bearer <access_token>
+```
 
-Already migrated or partially migrated:
+## Frontend Auth Flow
 
-* MongoDB connection setup is in `backend/app/database.py`.
-* User signup and signin use the `users` collection through `UserRepository`.
-* Dashboard and banking insights are being updated to read from MongoDB repositories.
-* `backend/scripts/seed_mongodb.py` can seed users, accounts, and transactions into MongoDB Atlas.
+The frontend stores the JWT returned from signup or signin in local storage under:
 
-Not yet fully migrated:
+```text
+banking_app_token
+```
 
-* Account features are still being migrated. Until `AccountRepository` and `AccountService` are updated, account creation, account details, deposits, and withdrawals are not fully MongoDB-backed.
-* Transaction features are still being migrated. Until `TransactionRepository` and `TransactionService` are updated, transaction history, transaction summaries, and transaction categories are not fully MongoDB-backed.
+The shared API helper adds the token to protected requests. Signing out clears the token and returns the user to the public home page. On refresh, the app reads the stored token and user id so the signed-in experience can reload.
 
-Because accounts and transactions are still in progress, some endpoints may still use `backend/app/data/sample_data.py` or may not run correctly until the missing repository work is completed.
+## Testing
+
+Run backend tests:
+
+```bash
+python -m pytest -p no:cacheprovider backend/tests
+```
+
+Build the frontend:
+
+```bash
+cd frontend
+npm run build
+```
+
+Recommended Postman collection requests:
+
+* Signup or signin
+* Create account
+* Get account details
+* Get user accounts
+* Deposit
+* Withdraw
+* Transaction history
+* No token returns `401`
+* Bad token returns `401`
+* Accessing another user's account returns `403`
+
+## Media
+
+### Create Profile
+
+![Create profile screen](docs/media/create-profile.png)
+
+### Dashboard
+
+![Dashboard screen](docs/media/dashboard.png)
+
+### Accounts
+
+![Accounts screen](docs/media/accounts.png)
+
+### Transactions
+
+![Transaction history screen](docs/media/transactions.png)
+
+### Insights
+
+![Banking insights screen](docs/media/insights.png)
