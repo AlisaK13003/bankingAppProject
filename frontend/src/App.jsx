@@ -26,6 +26,8 @@ export function App() {
   const [signupDraft, setSignupDraft] = useState(EMPTY_SIGNUP_DRAFT);
   const [pendingUserId, setPendingUserId] = useState(null);
   const bankingData = useBankingData(userId);
+  const openAccountUserId = pendingUserId ?? userId;
+  const headerIsPublic = isPublicRoute && !(route === ROUTES.openAccount && userId);
 
   function handleProfileCreated(newUserId) {
     setPendingUserId(newUserId);
@@ -36,6 +38,7 @@ export function App() {
     setUserId(String(newUserId));
     setSignupDraft(EMPTY_SIGNUP_DRAFT);
     setPendingUserId(null);
+    bankingData.refreshData();
     handleRouteChange(ROUTES.dashboard);
   }
 
@@ -50,11 +53,16 @@ export function App() {
     handleRouteChange(ROUTES.home);
   }
 
+  function handleOpenAnotherAccount() {
+    setPendingUserId(null);
+    handleRouteChange(ROUTES.openAccount);
+  }
+
   return (
     <div className="app-shell">
       <AppHeader
         activeRoute={route}
-        isPublic={isPublicRoute}
+        isPublic={headerIsPublic}
         onRouteChange={handleRouteChange}
         onSignOut={handleSignOut}
       />
@@ -76,9 +84,9 @@ export function App() {
       case ROUTES.openAccount:
         return (
           <OpenAccountPage
-            pendingUserId={pendingUserId}
+            pendingUserId={openAccountUserId}
             onOpened={handleAccountOpened}
-            onBackToProfile={() => handleRouteChange(ROUTES.createProfile)}
+            onBackToProfile={() => handleRouteChange(userId ? ROUTES.accounts : ROUTES.createProfile)}
           />
         );
       case ROUTES.signIn:
@@ -98,7 +106,7 @@ export function App() {
           />
         );
       case ROUTES.accounts:
-        return <AccountsPage {...bankingData} />;
+        return <AccountsPage {...bankingData} onOpenAnotherAccount={handleOpenAnotherAccount} />;
       case ROUTES.insights:
         return <InsightsPage {...bankingData} />;
       case ROUTES.dashboard:

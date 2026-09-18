@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { depositToAccount, withdrawFromAccount } from "../api/bankingApi";
 import {
-  AccountCard,
   AccountDetailHero,
   AccountInformationCard,
+  AccountSelector,
   BalanceOverviewCard,
   EmptyState,
   RecentTransactionsCard,
@@ -29,6 +29,7 @@ export function AccountsPage({
   accounts,
   error,
   loading,
+  onOpenAnotherAccount,
   selectedAccount,
   selectedAccountId,
   setSelectedAccountId,
@@ -44,23 +45,23 @@ export function AccountsPage({
       <StatusPanel state="loading" message={loading ? "Loading account details..." : ""} />
       <StatusPanel state="error" message={error} />
 
-      <section className="page-title-block">
-        <h1>Your accounts</h1>
-        <p>Review balances and account details, or move money in and out.</p>
+      <section className="page-title-row">
+        <div className="page-title-block">
+          <h1>Your accounts</h1>
+          <p>Review balances and account details, or move money in and out.</p>
+        </div>
+        <button className="button button-light" onClick={onOpenAnotherAccount} type="button">
+          {accounts.length ? "Open another account" : "Open first account"}
+        </button>
       </section>
 
       {accounts.length ? (
         <>
-          <section className="account-card-grid app-account-grid">
-            {accounts.map((item) => (
-              <AccountCard
-                account={item}
-                key={item.account_id}
-                onSelect={(nextAccountId) => setSelectedAccountId(String(nextAccountId))}
-                selected={String(item.account_id) === String(selectedAccountId)}
-              />
-            ))}
-          </section>
+          <AccountSelector
+            accounts={accounts}
+            selectedAccountId={selectedAccountId}
+            setSelectedAccountId={setSelectedAccountId}
+          />
 
           <BalanceOverviewCard
             accounts={accounts}
